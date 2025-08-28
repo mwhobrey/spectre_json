@@ -5,6 +5,12 @@ All notable changes to the Spectre JSON package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2024-12-19
+
+### ✨ Added
+- **Smart Expansion Control**: Configurable tree view expansion modes (none, objects, arrays, objectsAndArrays, all, levels)
+- **maxExpansionLevel**: Maximum levels to expand when using levels mode
+
 ## [1.0.0] - 2024-01-15
 
 ### 🎉 Initial Release
