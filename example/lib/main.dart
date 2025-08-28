@@ -33,9 +33,46 @@ class ExamplesPage extends StatefulWidget {
 
 class _ExamplesPageState extends State<ExamplesPage> {
   int _currentIndex = 0;
+  int _currentThemeIndex = 0;
   
   /// Store original example data to restore when switching examples
   late final List<Map<String, dynamic>> _originalExamples;
+
+  /// List of available themes for demonstration
+  final List<Map<String, dynamic>> _themes = [
+    {
+      'name': 'Red Panda (Default)',
+      'theme': RedPandaTheme(),
+    },
+    {
+      'name': 'Light Theme',
+      'theme': JsonEditorTheme.light(primaryColor: Colors.blue),
+    },
+    {
+      'name': 'Dark Theme',
+      'theme': JsonEditorTheme.dark(primaryColor: Colors.blue),
+    },
+    {
+      'name': 'Green Theme',
+      'theme': JsonEditorTheme.fromColors(
+        editorBackground: Colors.grey[900]!,
+        foreground: Colors.white,
+        primaryColor: Colors.green,
+        stringColor: Colors.lightGreen,
+        keyColor: Colors.lightGreen,
+      ),
+    },
+    {
+      'name': 'Purple Theme',
+      'theme': JsonEditorTheme.fromColors(
+        editorBackground: Colors.grey[900]!,
+        foreground: Colors.white,
+        primaryColor: Colors.purple,
+        stringColor: Colors.purple[300]!,
+        keyColor: Colors.purple[300]!,
+      ),
+    },
+  ];
 
   /// List of example configurations demonstrating different use cases.
   final List<Map<String, dynamic>> _examples = [
@@ -194,56 +231,105 @@ class _ExamplesPageState extends State<ExamplesPage> {
       ),
       body: Column(
         children: [
-          // Example selector
+          // Example and theme selectors
           Container(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Example: ',
-                  style: TextStyle(
-                    color: Color(0xFFC7CED1),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButton<int>(
-                  value: _currentIndex,
-                  dropdownColor: const Color(0xFF2F3537),
-                  style: const TextStyle(color: Color(0xFFC7CED1)),
-                  items: _examples.asMap().entries.map((entry) {
-                    return DropdownMenuItem<int>(
-                      value: entry.key,
+                Row(
+                  children: [
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            entry.value['title'],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            entry.value['description'],
+                          const Text(
+                            'Example: ',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: const Color(0xFFC7CED1).withValues(alpha: 0.7),
+                              color: Color(0xFFC7CED1),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButton<int>(
+                            value: _currentIndex,
+                            dropdownColor: const Color(0xFF2F3537),
+                            style: const TextStyle(color: Color(0xFFC7CED1)),
+                            items: _examples.asMap().entries.map((entry) {
+                              return DropdownMenuItem<int>(
+                                value: entry.key,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      entry.value['title'],
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      entry.value['description'],
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: const Color(0xFFC7CED1).withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (index) {
+                              if (index != null) {
+                                setState(() {
+                                  _currentIndex = index;
+                                });
+                                // Restore the original data for the new example
+                                _restoreOriginalData();
+                              }
+                            },
                           ),
                         ],
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (index) {
-                    if (index != null) {
-                      setState(() {
-                        _currentIndex = index;
-                      });
-                      // Restore the original data for the new example
-                      _restoreOriginalData();
-                    }
-                  },
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Theme: ',
+                            style: TextStyle(
+                              color: Color(0xFFC7CED1),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButton<int>(
+                            value: _currentThemeIndex,
+                            dropdownColor: const Color(0xFF2F3537),
+                            style: const TextStyle(color: Color(0xFFC7CED1)),
+                            items: _themes.asMap().entries.map((entry) {
+                              return DropdownMenuItem<int>(
+                                value: entry.key,
+                                child: Text(
+                                  entry.value['name'],
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (index) {
+                              if (index != null) {
+                                setState(() {
+                                  _currentThemeIndex = index;
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -262,7 +348,7 @@ class _ExamplesPageState extends State<ExamplesPage> {
                 title: currentExample['title'],
                 allowCopy: currentExample['allowCopy'],
                 readOnly: currentExample['readOnly'],
-                theme: RedPandaTheme(),
+                theme: _themes[_currentThemeIndex]['theme'],
               ),
             ),
           ),

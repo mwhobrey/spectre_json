@@ -1429,6 +1429,15 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
       closingChar = openingChar; // Fallback
     }
 
+    // Check if the next character is already the closing bracket (smart behavior)
+    if (cursorPosition < text.length && text[cursorPosition] == closingChar) {
+      // Just move the cursor past it
+      _textController.selection = TextSelection.collapsed(
+        offset: cursorPosition + 1,
+      );
+      return;
+    }
+
     // Insert opening bracket and closing bracket
     final newText =
         text.substring(0, cursorPosition) +
@@ -1448,6 +1457,15 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     final selection = _textController.selection;
     final cursorPosition = selection.baseOffset;
 
+    // Check if the next character is already a closing brace (smart behavior)
+    if (cursorPosition < text.length && text[cursorPosition] == '}') {
+      // Just move the cursor past it
+      _textController.selection = TextSelection.collapsed(
+        offset: cursorPosition + 1,
+      );
+      return;
+    }
+
     // Insert opening brace and closing brace
     final newText =
         text.substring(0, cursorPosition) +
@@ -1466,6 +1484,15 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     final text = _textController.text;
     final selection = _textController.selection;
     final cursorPosition = selection.baseOffset;
+
+    // Check if the next character is already a quote (smart behavior)
+    if (cursorPosition < text.length && text[cursorPosition] == quoteChar) {
+      // Just move the cursor past it
+      _textController.selection = TextSelection.collapsed(
+        offset: cursorPosition + 1,
+      );
+      return;
+    }
 
     // Check if we're already inside a string
     bool inString = false;
@@ -1557,5 +1584,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     }
   }
 }
+
+
 
 
