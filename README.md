@@ -1,4 +1,4 @@
-# Spectre - JSON Editor for Flutter
+# Spectre JSON - JSON Editor for Flutter
 
 A beautiful and feature-rich JSON editor widget for Flutter with syntax highlighting, tree view navigation, real-time validation, and customizable themes.
 
@@ -21,11 +21,11 @@ A beautiful and feature-rich JSON editor widget for Flutter with syntax highligh
 
 ## 🚀 Installation
 
-Add `spectre` to your `pubspec.yaml`:
+Add `spectre_json` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spectre: ^1.0.0
+  spectre_json: ^1.0.0
 ```
 
 Then run:
@@ -38,7 +38,7 @@ flutter pub get
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:spectre/spectre.dart';
+import 'package:spectre_json/spectre_json.dart';
 
 class MyApp extends StatefulWidget {
   @override

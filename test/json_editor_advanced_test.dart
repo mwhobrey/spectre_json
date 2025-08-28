@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spectre/spectre.dart';
+import 'package:spectre_json/spectre_json.dart';
 
 void main() {
   group('JsonEditor Advanced Functionality Tests', () {

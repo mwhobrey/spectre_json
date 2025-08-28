@@ -144,7 +144,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.1"
-  spectre:
+  spectre_json:
     dependency: "direct main"
     description:
       path: ".."

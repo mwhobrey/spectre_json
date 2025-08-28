@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spectre/spectre.dart';
+import 'package:spectre_json/spectre_json.dart';
 
 /// Example application demonstrating the Spectre JSON Editor package.
 /// 

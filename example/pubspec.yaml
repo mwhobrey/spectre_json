@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  spectre:
+  spectre_json:
     path: ../
 
 dev_dependencies:
