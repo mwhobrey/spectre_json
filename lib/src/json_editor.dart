@@ -1130,9 +1130,10 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     final bracketLevel = contextInfo['bracketLevel'] as int;
 
     // If we're before a closing brace/bracket AND not in an array context, decrease indentation
-    if ((isBeforeClosingBrace || isBeforeClosingBracket) && bracketLevel == 0) {
+    // BUT only if we're not after a comma (which means we're still inside the object)
+    if ((isBeforeClosingBrace || isBeforeClosingBracket) && bracketLevel == 0 && !isAfterComma) {
       _addDebugEntry(
-        'RESULT: Before closing brace/bracket (not in array) - returning ${(currentIndent - 2).clamp(0, currentIndent)} spaces',
+        'RESULT: Before closing brace/bracket (not in array, not after comma) - returning ${(currentIndent - 2).clamp(0, currentIndent)} spaces',
       );
       return ' ' * (currentIndent - 2).clamp(0, currentIndent);
     }
