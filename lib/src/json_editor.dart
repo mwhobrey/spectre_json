@@ -369,7 +369,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     _validateAndUpdateJson(text);
 
     // Debounce syntax highlighting
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 750), () {
       if (mounted && text != _lastHighlightedText) {
         setState(() {
           _lastHighlightedText = text;
