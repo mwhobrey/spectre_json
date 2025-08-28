@@ -30,23 +30,9 @@ keywords:
 topics:
   - json
   - editor
-  - syntax-highlighting
-  - tree-view
-  - validation
-  - themes
-  - configuration
-  - data-visualization
   - flutter-widget
-  - code-editor
-  - json-viewer
-  - json-formatter
-  - clipboard
-  - copy-paste
-  - dark-theme
-  - light-theme
-  - material-design
-  - responsive
-  - cross-platform
+  - themes
+  - validation
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
