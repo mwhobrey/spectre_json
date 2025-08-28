@@ -1249,14 +1249,20 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     }
 
     // General logic (only if not in array)
-    // If we're after a colon, we're starting a new value
-    if (isAfterColon) {
-      return ' ' * (currentIndent + 2);
+    // If we're after a comma, maintain current indentation (check this first)
+    if (isAfterComma) {
+      _addDebugEntry(
+        'RESULT: After comma - maintaining current indentation: ${currentIndent} spaces',
+      );
+      return ' ' * currentIndent;
     }
 
-    // If we're after a comma, maintain current indentation
-    if (isAfterComma) {
-      return ' ' * currentIndent;
+    // If we're after a colon, we're starting a new value
+    if (isAfterColon) {
+      _addDebugEntry(
+        'RESULT: After colon - increasing indentation: ${currentIndent + 2} spaces',
+      );
+      return ' ' * (currentIndent + 2);
     }
 
     // If we're after an opening brace/bracket, increase indentation
