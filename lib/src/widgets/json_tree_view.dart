@@ -27,6 +27,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   final Set<String> _expandedNodes = <String>{};
   String? _editingPath;
   String? _editingKey;
+  String? _addingToPath;
   final TextEditingController _editController = TextEditingController();
   final FocusNode _editFocusNode = FocusNode();
 
@@ -56,7 +57,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildNodeHeader(path, value, isExpanded, 'object'),
-          if (isExpanded)
+          if (isExpanded) ...[
             ...value.entries.map((entry) {
               final newPath = path.isEmpty ? entry.key : '$path.${entry.key}';
               return Padding(
@@ -64,6 +65,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                 child: _buildNode(entry.value, newPath),
               );
             }),
+            // Add new item button for objects
+            if (!widget.readOnly) _buildAddItemButton(path, value, 'object'),
+          ],
         ],
       );
     } else if (value is List) {
@@ -72,7 +76,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildNodeHeader(path, value, isExpanded, 'array'),
-          if (isExpanded)
+          if (isExpanded) ...[
             ...value.asMap().entries.map((entry) {
               final newPath = '$path[${entry.key}]';
               return Padding(
@@ -80,6 +84,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                 child: _buildNode(entry.value, newPath),
               );
             }),
+            // Add new item button for arrays
+            if (!widget.readOnly) _buildAddItemButton(path, value, 'array'),
+          ],
         ],
       );
     } else {
@@ -177,6 +184,406 @@ class _JsonTreeViewState extends State<JsonTreeView> {
             _buildCopyButton(value, displayName),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddItemButton(String path, dynamic parentValue, String type) {
+    final isAdding = _addingToPath == path;
+    
+    return Padding(
+      padding: const EdgeInsets.only(left: 20.0),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        child: isAdding
+            ? _buildAddItemField(path, parentValue, type)
+            : GestureDetector(
+                onTap: () => _startAddingItem(path, parentValue, type),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: widget.theme.surfaceBackground,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: widget.theme.primaryColor.withValues(alpha: 0.3),
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add,
+                        color: widget.theme.primaryColor,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        type == 'array' ? 'Add item' : 'Add property',
+                        style: TextStyle(
+                          color: widget.theme.primaryColor,
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildAddItemField(String path, dynamic parentValue, String type) {
+    final isArray = type == 'array';
+    final suggestedKey = _getSuggestedKey(parentValue);
+    final suggestedValue = _getSuggestedValue(parentValue);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Key field (for objects only)
+        if (!isArray) ...[
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _editController,
+                  focusNode: _editFocusNode,
+                  style: TextStyle(
+                    color: widget.theme.primaryColor,
+                    fontSize: 13,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Property name',
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(2),
+                      borderSide: BorderSide(color: widget.theme.primaryColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(2),
+                      borderSide: BorderSide(color: widget.theme.primaryColor, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: widget.theme.editorBackground,
+                  ),
+                  onSubmitted: (key) => _finishAddingItem(path, parentValue, type, key, suggestedValue.toString()),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildAddItemActionButton(path, parentValue, type, _editController.text, suggestedValue.toString()),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+        // Value field
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: isArray ? _editController : TextEditingController(text: suggestedValue.toString()),
+                style: TextStyle(
+                  color: _getValueColor(suggestedValue),
+                  fontSize: 13,
+                ),
+                decoration: InputDecoration(
+                  hintText: isArray ? 'Value' : 'Value (optional)',
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(2),
+                    borderSide: BorderSide(color: widget.theme.primaryColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(2),
+                    borderSide: BorderSide(color: widget.theme.primaryColor, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: widget.theme.editorBackground,
+                ),
+                onSubmitted: (value) => _finishAddingItem(path, parentValue, type, isArray ? suggestedKey : _editController.text, value),
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (isArray) _buildAddItemActionButton(path, parentValue, type, suggestedKey, suggestedValue.toString()),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddItemActionButton(String path, dynamic parentValue, String type, String key, String value) {
+    return GestureDetector(
+      onTap: () => _finishAddingItem(path, parentValue, type, key, value),
+      child: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: widget.theme.primaryColor,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Icon(
+          Icons.check,
+          color: Colors.white,
+          size: 14,
+        ),
+      ),
+    );
+  }
+
+  void _startAddingItem(String path, dynamic parentValue, String type) {
+    // Clear any existing editing
+    if (_editingPath != null || _editingKey != null) {
+      setState(() {
+        _editingPath = null;
+        _editingKey = null;
+      });
+    }
+    
+    setState(() {
+      _addingToPath = path;
+      if (type == 'array') {
+        _editController.text = '';
+      } else {
+        _editController.text = _getSuggestedKey(parentValue);
+      }
+    });
+    
+    // Focus the text field after the widget rebuilds
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _editFocusNode.requestFocus();
+      _editController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _editController.text.length),
+      );
+    });
+  }
+
+  void _finishAddingItem(String path, dynamic parentValue, String type, String key, String value) {
+    if (_addingToPath != path) return;
+
+    final trimmedKey = key.trim();
+    final trimmedValue = value.trim();
+
+    // Debug output removed for production
+
+    // Validate input
+    if (type == 'object' && trimmedKey.isEmpty) {
+      _showError('Property name cannot be empty');
+      return;
+    }
+
+    if (type == 'array' && trimmedValue.isEmpty) {
+      _showError('Array item value cannot be empty');
+      return;
+    }
+
+    // Check for duplicate keys in objects
+    if (type == 'object' && parentValue is Map && parentValue.containsKey(trimmedKey)) {
+      _showError('Property "$trimmedKey" already exists');
+      return;
+    }
+
+    // Parse the value based on context
+    dynamic parsedValue;
+    if (type == 'array') {
+      parsedValue = _parseArrayValue(trimmedValue, parentValue);
+    } else {
+      parsedValue = _parseObjectValue(trimmedValue);
+    }
+
+    if (parsedValue == null) {
+      _showError('Invalid value format');
+      return;
+    }
+
+    // Adding item with key="$trimmedKey", parsedValue=$parsedValue
+
+    // Add the item to the data structure
+    _addItemToPath(widget.data, path, type, trimmedKey, parsedValue);
+    widget.onDataChanged(Map<String, dynamic>.from(widget.data));
+
+    setState(() {
+      _addingToPath = null;
+    });
+  }
+
+  String _getSuggestedKey(dynamic parentValue) {
+    if (parentValue is Map) {
+      // Find the next available key
+      int counter = 1;
+      String key = 'property$counter';
+      while (parentValue.containsKey(key)) {
+        counter++;
+        key = 'property$counter';
+      }
+      return key;
+    }
+    return 'property1';
+  }
+
+  dynamic _getSuggestedValue(dynamic parentValue) {
+    if (parentValue is List && parentValue.isNotEmpty) {
+      // Return a value of the same type as existing items
+      final firstItem = parentValue.first;
+      if (firstItem is String) return '';
+      if (firstItem is num) return 0;
+      if (firstItem is bool) return false;
+      if (firstItem is List) return [];
+      if (firstItem is Map) return {};
+    }
+    return '';
+  }
+
+  dynamic _parseArrayValue(String value, List parentArray) {
+    if (parentArray.isEmpty) {
+      // Empty array - try to infer type from the value
+      if (value.toLowerCase() == 'true' || value.toLowerCase() == 'false') {
+        return value.toLowerCase() == 'true';
+      }
+      if (int.tryParse(value) != null) {
+        return int.parse(value);
+      }
+      if (double.tryParse(value) != null) {
+        return double.parse(value);
+      }
+      if (value.toLowerCase() == 'null') {
+        return null;
+      }
+      return value;
+    }
+
+    // Non-empty array - match the type of existing items
+    final firstItem = parentArray.first;
+    if (firstItem is String) {
+      return value;
+    }
+    if (firstItem is int) {
+      final intValue = int.tryParse(value);
+      if (intValue != null) return intValue;
+      _showError('Expected integer value');
+      return null;
+    }
+    if (firstItem is double) {
+      final doubleValue = double.tryParse(value);
+      if (doubleValue != null) return doubleValue;
+      _showError('Expected number value');
+      return null;
+    }
+    if (firstItem is bool) {
+      if (value.toLowerCase() == 'true') return true;
+      if (value.toLowerCase() == 'false') return false;
+      _showError('Expected boolean value (true/false)');
+      return null;
+    }
+    if (firstItem is List) {
+      if (value.startsWith('[') && value.endsWith(']')) {
+        try {
+          return jsonDecode(value);
+        } catch (e) {
+          _showError('Invalid array format');
+          return null;
+        }
+      }
+      _showError('Expected array format [item1, item2, ...]');
+      return null;
+    }
+    if (firstItem is Map) {
+      if (value.startsWith('{') && value.endsWith('}')) {
+        try {
+          return jsonDecode(value);
+        } catch (e) {
+          _showError('Invalid object format');
+          return null;
+        }
+      }
+      _showError('Expected object format {key: value}');
+      return null;
+    }
+
+    return value;
+  }
+
+  dynamic _parseObjectValue(String value) {
+    if (value.isEmpty) return '';
+    
+    if (value.toLowerCase() == 'true' || value.toLowerCase() == 'false') {
+      return value.toLowerCase() == 'true';
+    }
+    if (int.tryParse(value) != null) {
+      return int.parse(value);
+    }
+    if (double.tryParse(value) != null) {
+      return double.parse(value);
+    }
+    if (value.toLowerCase() == 'null') {
+      return null;
+    }
+    if (value.startsWith('[') && value.endsWith(']')) {
+      try {
+        return jsonDecode(value);
+      } catch (e) {
+        _showError('Invalid array format');
+        return null;
+      }
+    }
+    if (value.startsWith('{') && value.endsWith('}')) {
+      try {
+        return jsonDecode(value);
+      } catch (e) {
+        _showError('Invalid object format');
+        return null;
+      }
+    }
+    
+    return value;
+  }
+
+  void _addItemToPath(Map<String, dynamic> data, String path, String type, String key, dynamic value) {
+    final parts = _parsePath(path);
+    dynamic current = data;
+    
+    // Navigate to the target (skip if path is empty - we're at root)
+    if (parts.isNotEmpty) {
+      for (final part in parts) {
+        if (part is String) {
+          if (current is Map && current.containsKey(part)) {
+            current = current[part];
+                  } else {
+          return; // Path not found
+        }
+        } else if (part is int) {
+          if (current is List && part >= 0 && part < current.length) {
+            current = current[part];
+                  } else {
+          return; // Path not found
+        }
+        } else {
+          return; // Invalid path
+        }
+      }
+    }
+    
+    // Current target = $current
+    
+    // Add the item
+    if (type == 'object' && current is Map) {
+      current[key] = value;
+    } else if (type == 'array' && current is List) {
+      // Cast the value to the correct type to avoid type mismatch
+      current.add(value as dynamic);
+    } else {
+      // Invalid target type: ${current.runtimeType}
+    }
+    
+    // Final data = $data
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -356,10 +763,11 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   }
 
   void _startEditing(String path, dynamic value) {
-    // Clear any existing key editing
-    if (_editingKey != null) {
+    // Clear any existing editing
+    if (_editingKey != null || _addingToPath != null) {
       setState(() {
         _editingKey = null;
+        _addingToPath = null;
       });
     }
     
@@ -394,10 +802,11 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   }
 
   void _startEditingKey(String path, String currentKey) {
-    // Clear any existing value editing
-    if (_editingPath != null) {
+    // Clear any existing editing
+    if (_editingPath != null || _addingToPath != null) {
       setState(() {
         _editingPath = null;
+        _addingToPath = null;
       });
     }
     
@@ -593,6 +1002,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     final segments = path.split('.');
     
     for (final segment in segments) {
+      // Skip empty segments
+      if (segment.isEmpty) continue;
+      
       // Check if segment contains array index
       final bracketIndex = segment.indexOf('[');
       if (bracketIndex != -1) {
