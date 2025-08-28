@@ -33,6 +33,9 @@ class ExamplesPage extends StatefulWidget {
 
 class _ExamplesPageState extends State<ExamplesPage> {
   int _currentIndex = 0;
+  
+  /// Store original example data to restore when switching examples
+  late final List<Map<String, dynamic>> _originalExamples;
 
   /// List of example configurations demonstrating different use cases.
   final List<Map<String, dynamic>> _examples = [
@@ -153,6 +156,25 @@ class _ExamplesPageState extends State<ExamplesPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Create a deep copy of the original examples to preserve them
+    _originalExamples = _examples.map((example) {
+      return {
+        ...example,
+        'data': Map<String, dynamic>.from(example['data']),
+      };
+    }).toList();
+  }
+
+  /// Restore the original data for the current example
+  void _restoreOriginalData() {
+    setState(() {
+      _examples[_currentIndex]['data'] = Map<String, dynamic>.from(_originalExamples[_currentIndex]['data']);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final currentExample = _examples[_currentIndex];
 
@@ -218,6 +240,8 @@ class _ExamplesPageState extends State<ExamplesPage> {
                       setState(() {
                         _currentIndex = index;
                       });
+                      // Restore the original data for the new example
+                      _restoreOriginalData();
                     }
                   },
                 ),
