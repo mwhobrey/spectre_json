@@ -623,6 +623,11 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
                   : _buildEditableView(),
             ),
           ),
+          // Error message display
+          if (!_isValidJson && _errorMessage.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildErrorMessage(),
+          ],
 
           // Action Buttons
           if (!widget.readOnly) ...[
@@ -720,11 +725,14 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
                         fontSize: 13,
                         color: _theme.foreground,
                         height: 1.4,
+                        fontWeight: FontWeight.w400,
                       ),
                       maxLines: null,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.only(left: 12, right: 12),
+                        contentPadding: const EdgeInsets.only(left: 12, right: 12),
+                        fillColor: Colors.transparent,
+                        filled: true,
                       ),
                       cursorColor: _theme.cursorColor,
                       onChanged: _onTextChanged,
