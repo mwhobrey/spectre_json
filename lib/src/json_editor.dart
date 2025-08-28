@@ -166,6 +166,25 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(JsonEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Update data when initialData changes
+    if (oldWidget.initialData != widget.initialData) {
+      _currentData = Map<String, dynamic>.from(widget.initialData);
+      _textController.text = _formatJson(_currentData);
+      _lastHighlightedText = _textController.text;
+      _isValidJson = true;
+      _errorMessage = '';
+    }
+    
+    // Update theme when it changes
+    if (oldWidget.theme != widget.theme) {
+      _theme = widget.theme ?? RedPandaTheme();
+    }
+  }
+
   void _syncScroll() {
     // Scroll synchronization will be handled by the CustomScrollView
   }
