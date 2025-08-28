@@ -26,6 +26,7 @@ class JsonTreeView extends StatefulWidget {
 class _JsonTreeViewState extends State<JsonTreeView> {
   final Set<String> _expandedNodes = <String>{};
   String? _editingPath;
+  String? _editingKey;
   final TextEditingController _editController = TextEditingController();
   final FocusNode _editFocusNode = FocusNode();
 
@@ -136,15 +137,18 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
           const SizedBox(width: 8),
 
-          // Node Name
-          Text(
-            displayName,
-            style: TextStyle(
-              color: widget.theme.primaryColor,
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
-            ),
-          ),
+          // Node Name (editable for non-root nodes)
+          if (path.isEmpty)
+            Text(
+              displayName,
+              style: TextStyle(
+                color: widget.theme.primaryColor,
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
+            )
+          else
+            _buildEditableKey(path, displayName),
 
           const SizedBox(width: 8),
 
@@ -177,6 +181,66 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     );
   }
 
+  Widget _buildEditableKey(String path, String currentKey) {
+    final isEditingKey = _editingKey == path;
+    
+    return isEditingKey
+        ? _buildKeyEditField(path, currentKey)
+        : GestureDetector(
+            onTap: widget.readOnly ? null : () => _startEditingKey(path, currentKey),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+              decoration: BoxDecoration(
+                color: widget.readOnly 
+                    ? Colors.transparent 
+                    : widget.theme.editorBackground,
+                borderRadius: BorderRadius.circular(2),
+                border: widget.readOnly 
+                    ? null 
+                    : Border.all(color: widget.theme.primaryColor.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                currentKey,
+                style: TextStyle(
+                  color: widget.theme.primaryColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          );
+  }
+
+  Widget _buildKeyEditField(String path, String currentKey) {
+    return SizedBox(
+      width: 120, // Fixed width for key editing
+      child: TextField(
+        controller: _editController,
+        focusNode: _editFocusNode,
+        style: TextStyle(
+          color: widget.theme.primaryColor,
+          fontWeight: FontWeight.w500,
+          fontSize: 13,
+        ),
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(2),
+            borderSide: BorderSide(color: widget.theme.primaryColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(2),
+            borderSide: BorderSide(color: widget.theme.primaryColor, width: 2),
+          ),
+          filled: true,
+          fillColor: widget.theme.editorBackground,
+        ),
+        onSubmitted: (newKey) => _finishEditingKey(path, currentKey, newKey),
+        onEditingComplete: () => _finishEditingKey(path, currentKey, _editController.text),
+      ),
+    );
+  }
+
   Widget _buildLeafNode(String path, dynamic value) {
     final displayName = path.split('.').last;
     final valueColor = _getValueColor(value);
@@ -195,14 +259,10 @@ class _JsonTreeViewState extends State<JsonTreeView> {
           // Indent to align with parent nodes
           const SizedBox(width: 32),
 
-          // Key Name
+          // Key Name (editable)
           Expanded(
             flex: 2,
-            child: Text(
-              displayName,
-              style: TextStyle(color: widget.theme.primaryColor, fontSize: 13),
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: _buildEditableKey(path, displayName),
           ),
 
           const SizedBox(width: 8),
@@ -296,6 +356,13 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   }
 
   void _startEditing(String path, dynamic value) {
+    // Clear any existing key editing
+    if (_editingKey != null) {
+      setState(() {
+        _editingKey = null;
+      });
+    }
+    
     setState(() {
       _editingPath = path;
       _editController.text = _getEditableValue(value);
@@ -324,6 +391,106 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     setState(() {
       _editingPath = null;
     });
+  }
+
+  void _startEditingKey(String path, String currentKey) {
+    // Clear any existing value editing
+    if (_editingPath != null) {
+      setState(() {
+        _editingPath = null;
+      });
+    }
+    
+    setState(() {
+      _editingKey = path;
+      _editController.text = currentKey;
+    });
+    
+    // Focus the text field after the widget rebuilds
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _editFocusNode.requestFocus();
+      _editController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _editController.text.length),
+      );
+    });
+  }
+
+  void _finishEditingKey(String path, String oldKey, String newKey) {
+    if (_editingKey != path) return;
+
+    final trimmedKey = newKey.trim();
+    if (trimmedKey.isEmpty || trimmedKey == oldKey) {
+      setState(() {
+        _editingKey = null;
+      });
+      return;
+    }
+
+    // Check if the new key already exists in the parent object (excluding the current key)
+    final parentPath = _getParentPath(path);
+    final parent = parentPath.isEmpty ? widget.data : _getValueAtPath(widget.data, parentPath);
+    
+    if (parent is Map && parent.containsKey(trimmedKey) && trimmedKey != oldKey) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Key "$trimmedKey" already exists'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      setState(() {
+        _editingKey = null;
+      });
+      return;
+    }
+
+    // Rename the key in the data structure
+    _renameKeyAtPath(widget.data, path, oldKey, trimmedKey);
+    widget.onDataChanged(Map<String, dynamic>.from(widget.data));
+
+    setState(() {
+      _editingKey = null;
+    });
+  }
+
+  String _getParentPath(String path) {
+    final parts = path.split('.');
+    if (parts.length <= 1) return '';
+    return parts.take(parts.length - 1).join('.');
+  }
+
+  void _renameKeyAtPath(Map<String, dynamic> data, String path, String oldKey, String newKey) {
+    final parts = _parsePath(path);
+    dynamic current = data;
+    
+    // Navigate to the parent of the target
+    for (int i = 0; i < parts.length - 1; i++) {
+      final part = parts[i];
+      if (part is String) {
+        if (current is Map && current.containsKey(part)) {
+          current = current[part];
+        } else {
+          return; // Path not found
+        }
+      } else if (part is int) {
+        if (current is List && part >= 0 && part < current.length) {
+          current = current[part];
+        } else {
+          return; // Path not found
+        }
+      } else {
+        return; // Invalid path
+      }
+    }
+    
+    // Rename the key
+    final lastPart = parts.last;
+    if (lastPart is String && current is Map && current.containsKey(lastPart)) {
+      final value = current[lastPart];
+      current.remove(lastPart);
+      current[newKey] = value;
+    }
   }
 
   String _getEditableValue(dynamic value) {
