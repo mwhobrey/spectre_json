@@ -270,7 +270,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                     filled: true,
                     fillColor: widget.theme.editorBackground,
                   ),
-                  onSubmitted: (key) => _finishAddingItem(path, parentValue, type, key, suggestedValue.toString()),
+                  onSubmitted: (key) => _finishAddingItem(path, parentValue, type, key, _valueController.text),
                 ),
               ),
               const SizedBox(width: 8),
