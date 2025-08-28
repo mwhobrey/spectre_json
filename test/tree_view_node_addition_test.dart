@@ -5,7 +5,7 @@ import 'package:spectre/spectre.dart';
 void main() {
   group('JsonTreeView Node Addition Tests', () {
     testWidgets('Can add properties to objects', (WidgetTester tester) async {
-      final testData = {
+      final testData = <String, dynamic>{
         'name': 'John Doe',
         'age': 30,
       };
@@ -54,6 +54,101 @@ void main() {
       expect(updatedData!['email'], equals('john@example.com'));
       expect(updatedData!['name'], equals('John Doe'));
       expect(updatedData!['age'], equals(30));
+    });
+
+    testWidgets('Can add arrays as property values', (WidgetTester tester) async {
+      final testData = <String, dynamic>{
+        'name': 'John Doe',
+      };
+
+      Map<String, dynamic>? updatedData;
+      
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: JsonTreeView(
+              data: testData,
+              onDataChanged: (data) => updatedData = data,
+              readOnly: false,
+              theme: RedPandaTheme(),
+            ),
+          ),
+        ),
+      );
+
+      // Root object is already expanded by default
+      // Tap on "Add property" button
+      await tester.tap(find.text('Add property'));
+      await tester.pumpAndSettle();
+
+      // Should show text fields for adding
+      expect(find.byType(TextField), findsNWidgets(2)); // Key and value fields
+
+      // Enter property name
+      await tester.enterText(find.byType(TextField).first, 'hobbies');
+      await tester.pumpAndSettle();
+
+      // Enter array value
+      await tester.enterText(find.byType(TextField).last, '["reading", "coding"]');
+      await tester.pumpAndSettle();
+
+      // Submit the form by pressing Enter on the value field
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Verify array property was added
+      expect(updatedData, isNotNull);
+      expect(updatedData!.containsKey('hobbies'), isTrue);
+      expect(updatedData!['hobbies'], isA<List>());
+      expect(updatedData!['hobbies'], equals(['reading', 'coding']));
+    });
+
+    testWidgets('Can add objects as property values', (WidgetTester tester) async {
+      final testData = <String, dynamic>{
+        'name': 'John Doe',
+      };
+
+      Map<String, dynamic>? updatedData;
+      
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: JsonTreeView(
+              data: testData,
+              onDataChanged: (data) => updatedData = data,
+              readOnly: false,
+              theme: RedPandaTheme(),
+            ),
+          ),
+        ),
+      );
+
+      // Root object is already expanded by default
+      // Tap on "Add property" button
+      await tester.tap(find.text('Add property'));
+      await tester.pumpAndSettle();
+
+      // Should show text fields for adding
+      expect(find.byType(TextField), findsNWidgets(2)); // Key and value fields
+
+      // Enter property name
+      await tester.enterText(find.byType(TextField).first, 'address');
+      await tester.pumpAndSettle();
+
+      // Enter object value
+      await tester.enterText(find.byType(TextField).last, '{"street": "123 Main St", "city": "Anytown"}');
+      await tester.pumpAndSettle();
+
+      // Submit the form by pressing Enter on the value field
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Verify object property was added
+      expect(updatedData, isNotNull);
+      expect(updatedData!.containsKey('address'), isTrue);
+      expect(updatedData!['address'], isA<Map>());
+      expect(updatedData!['address']['street'], equals('123 Main St'));
+      expect(updatedData!['address']['city'], equals('Anytown'));
     });
 
     testWidgets('Can add items to arrays', (WidgetTester tester) async {

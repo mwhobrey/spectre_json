@@ -29,6 +29,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   String? _editingKey;
   String? _addingToPath;
   final TextEditingController _editController = TextEditingController();
+  final TextEditingController _valueController = TextEditingController();
   final FocusNode _editFocusNode = FocusNode();
 
   @override
@@ -41,6 +42,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   @override
   void dispose() {
     _editController.dispose();
+    _valueController.dispose();
     _editFocusNode.dispose();
     super.dispose();
   }
@@ -277,35 +279,62 @@ class _JsonTreeViewState extends State<JsonTreeView> {
           ),
           const SizedBox(height: 4),
         ],
-        // Value field
-        Row(
+        // Value field with type helpers
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: TextField(
-                controller: isArray ? _editController : TextEditingController(text: suggestedValue.toString()),
-                style: TextStyle(
-                  color: _getValueColor(suggestedValue),
-                  fontSize: 13,
-                ),
-                decoration: InputDecoration(
-                  hintText: isArray ? 'Value' : 'Value (optional)',
-                  contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(2),
-                    borderSide: BorderSide(color: widget.theme.primaryColor),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: isArray ? _editController : _valueController,
+                    style: TextStyle(
+                      color: _getValueColor(suggestedValue),
+                      fontSize: 13,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: isArray ? 'Value' : 'Value (optional)',
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(2),
+                        borderSide: BorderSide(color: widget.theme.primaryColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(2),
+                        borderSide: BorderSide(color: widget.theme.primaryColor, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: widget.theme.editorBackground,
+                    ),
+                    onSubmitted: (value) => _finishAddingItem(path, parentValue, type, isArray ? suggestedKey : _editController.text, isArray ? value : _valueController.text),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(2),
-                    borderSide: BorderSide(color: widget.theme.primaryColor, width: 2),
-                  ),
-                  filled: true,
-                  fillColor: widget.theme.editorBackground,
                 ),
-                onSubmitted: (value) => _finishAddingItem(path, parentValue, type, isArray ? suggestedKey : _editController.text, value),
-              ),
+                const SizedBox(width: 8),
+                if (isArray) _buildAddItemActionButton(path, parentValue, type, suggestedKey, _editController.text),
+              ],
             ),
-            const SizedBox(width: 8),
-            if (isArray) _buildAddItemActionButton(path, parentValue, type, suggestedKey, suggestedValue.toString()),
+            // Type helper buttons (for objects only)
+            if (!isArray) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTypeHelperButton('[]', 'Empty array', () {
+                    // For objects, we need to update the value field
+                    // Since we're using a new controller each time, we'll need to handle this differently
+                    _setValueFieldText('[]');
+                  }),
+                  const SizedBox(width: 4),
+                  _buildTypeHelperButton('{}', 'Empty object', () {
+                    _setValueFieldText('{}');
+                  }),
+                  const SizedBox(width: 4),
+                  _buildTypeHelperButton('null', 'Null value', () {
+                    _setValueFieldText('null');
+                  }),
+                ],
+              ),
+            ],
           ],
         ),
       ],
@@ -331,6 +360,36 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     );
   }
 
+  Widget _buildTypeHelperButton(String text, String tooltip, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: widget.theme.surfaceBackground,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: widget.theme.primaryColor.withValues(alpha: 0.3),
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: widget.theme.primaryColor,
+            fontSize: 11,
+            fontFamily: 'monospace',
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _setValueFieldText(String text) {
+    _valueController.text = text;
+    setState(() {});
+  }
+
   void _startAddingItem(String path, dynamic parentValue, String type) {
     // Clear any existing editing
     if (_editingPath != null || _editingKey != null) {
@@ -346,6 +405,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         _editController.text = '';
       } else {
         _editController.text = _getSuggestedKey(parentValue);
+        _valueController.text = _getSuggestedValue(parentValue).toString();
       }
     });
     
@@ -567,7 +627,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     
     // Add the item
     if (type == 'object' && current is Map) {
-      current[key] = value;
+      (current as Map<String, dynamic>)[key] = value;
     } else if (type == 'array' && current is List) {
       // Cast the value to the correct type to avoid type mismatch
       current.add(value as dynamic);
