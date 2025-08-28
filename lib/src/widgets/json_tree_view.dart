@@ -274,7 +274,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                 ),
               ),
               const SizedBox(width: 8),
-              _buildAddItemActionButton(path, parentValue, type, _editController.text, suggestedValue.toString()),
+              _buildAddItemActionButton(path, parentValue, type, _editController.text, _valueController.text),
             ],
           ),
           const SizedBox(height: 4),
