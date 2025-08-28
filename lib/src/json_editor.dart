@@ -19,6 +19,28 @@ enum ViewType {
   rawOnly,
 }
 
+/// Enum defining how tree view nodes should be expanded by default.
+enum ExpansionMode {
+  /// No nodes are expanded by default.
+  none,
+  
+  /// Only object nodes are expanded (including nested objects).
+  objects,
+  
+  /// Only array nodes are expanded (including nested arrays).
+  arrays,
+  
+  /// Both objects and arrays are expanded.
+  objectsAndArrays,
+  
+  /// All nodes are expanded (objects, arrays, and their contents).
+  all,
+  
+  /// Expand only the top N levels of the tree structure.
+  /// Use with [maxExpansionLevel] to specify the number of levels.
+  levels,
+}
+
 /// A beautiful and feature-rich JSON editor widget for Flutter.
 /// 
 /// This widget provides a dual-view JSON editor with syntax highlighting,
@@ -107,6 +129,26 @@ class JsonEditor extends StatefulWidget {
   /// Defaults to [ViewType.dual].
   final ViewType viewType;
 
+  /// Controls how tree view nodes are expanded by default.
+  /// 
+  /// - [ExpansionMode.none]: No nodes are expanded (default)
+  /// - [ExpansionMode.objects]: Only object nodes are expanded
+  /// - [ExpansionMode.arrays]: Only array nodes are expanded
+  /// - [ExpansionMode.objectsAndArrays]: Both objects and arrays are expanded
+  /// - [ExpansionMode.all]: All nodes are expanded
+  /// - [ExpansionMode.levels]: Expand only the top N levels (use with [maxExpansionLevel])
+  /// 
+  /// Defaults to [ExpansionMode.none].
+  final ExpansionMode expansionMode;
+
+  /// Maximum number of levels to expand when using [ExpansionMode.levels].
+  /// 
+  /// This property is only used when [expansionMode] is set to [ExpansionMode.levels].
+  /// For example, if set to 2, only the top 2 levels of the tree will be expanded.
+  /// 
+  /// Defaults to 2.
+  final int maxExpansionLevel;
+
   const JsonEditor({
     super.key,
     required this.initialData,
@@ -119,6 +161,8 @@ class JsonEditor extends StatefulWidget {
     this.onExpansionChanged,
     this.theme,
     this.viewType = ViewType.dual,
+    this.expansionMode = ExpansionMode.none,
+    this.maxExpansionLevel = 2,
   });
 
   @override
@@ -642,6 +686,8 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
               readOnly: widget.readOnly,
               allowCopy: widget.allowCopy,
               theme: _theme,
+              expansionMode: widget.expansionMode,
+              maxExpansionLevel: widget.maxExpansionLevel,
             ),
           ),
         ),

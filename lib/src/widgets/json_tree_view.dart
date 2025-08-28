@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import '../theme/red_panda_theme.dart';
+import '../json_editor.dart';
 
 class JsonTreeView extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -9,6 +10,8 @@ class JsonTreeView extends StatefulWidget {
   final bool readOnly;
   final bool allowCopy;
   final JsonEditorTheme theme;
+  final ExpansionMode expansionMode;
+  final int maxExpansionLevel;
 
   const JsonTreeView({
     super.key,
@@ -17,6 +20,8 @@ class JsonTreeView extends StatefulWidget {
     this.readOnly = false,
     this.allowCopy = false,
     required this.theme,
+    this.expansionMode = ExpansionMode.none,
+    this.maxExpansionLevel = 2,
   });
 
   @override
@@ -40,6 +45,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     super.initState();
     // Always expand root node
     _expandedNodes.add('');
+    
+    // Apply expansion mode
+    _applyExpansionMode();
   }
 
   @override
@@ -48,6 +56,125 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     _valueController.dispose();
     _editFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Applies the expansion mode to determine which nodes should be expanded by default.
+  void _applyExpansionMode() {
+    switch (widget.expansionMode) {
+      case ExpansionMode.none:
+        // Only root node is expanded (already added in initState)
+        break;
+        
+      case ExpansionMode.objects:
+        _expandObjects(widget.data, '');
+        break;
+        
+      case ExpansionMode.arrays:
+        _expandArrays(widget.data, '');
+        break;
+        
+      case ExpansionMode.objectsAndArrays:
+        _expandObjects(widget.data, '');
+        _expandArrays(widget.data, '');
+        break;
+        
+      case ExpansionMode.all:
+        _expandAll(widget.data, '');
+        break;
+        
+      case ExpansionMode.levels:
+        _expandLevels(widget.data, '', 0);
+        break;
+    }
+  }
+
+  /// Expands all object nodes recursively.
+  void _expandObjects(dynamic value, String path) {
+    if (value is Map) {
+      _expandedNodes.add(path);
+      for (final entry in value.entries) {
+        final newPath = path.isEmpty ? entry.key : '$path.${entry.key}';
+        _expandObjects(entry.value, newPath);
+      }
+    } else if (value is List) {
+      for (int i = 0; i < value.length; i++) {
+        final newPath = '$path[$i]';
+        _expandObjects(value[i], newPath);
+      }
+    }
+  }
+
+  /// Expands all array nodes recursively.
+  void _expandArrays(dynamic value, String path) {
+    if (value is List) {
+      _expandedNodes.add(path);
+      for (int i = 0; i < value.length; i++) {
+        final newPath = '$path[$i]';
+        _expandArrays(value[i], newPath);
+      }
+    } else if (value is Map) {
+      // Expand the parent object so we can see arrays inside it
+      _expandedNodes.add(path);
+      for (final entry in value.entries) {
+        final newPath = path.isEmpty ? entry.key : '$path.${entry.key}';
+        _expandArrays(entry.value, newPath);
+      }
+    }
+  }
+
+  /// Expands all nodes recursively.
+  void _expandAll(dynamic value, String path) {
+    if (value is Map || value is List) {
+      _expandedNodes.add(path);
+    }
+    
+    if (value is Map) {
+      for (final entry in value.entries) {
+        final newPath = path.isEmpty ? entry.key : '$path.${entry.key}';
+        _expandAll(entry.value, newPath);
+      }
+    } else if (value is List) {
+      for (int i = 0; i < value.length; i++) {
+        final newPath = '$path[$i]';
+        _expandAll(value[i], newPath);
+      }
+    }
+  }
+
+  /// Expands nodes up to the specified level.
+  void _expandLevels(dynamic value, String path, int currentLevel) {
+    if (currentLevel < widget.maxExpansionLevel) {
+      if (value is Map || value is List) {
+        _expandedNodes.add(path);
+      }
+      
+      if (value is Map) {
+        for (final entry in value.entries) {
+          final newPath = path.isEmpty ? entry.key : '$path.${entry.key}';
+          _expandLevels(entry.value, newPath, currentLevel + 1);
+        }
+      } else if (value is List) {
+        for (int i = 0; i < value.length; i++) {
+          final newPath = '$path[$i]';
+          _expandLevels(value[i], newPath, currentLevel + 1);
+        }
+      }
+    }
+  }
+
+  /// Gets the display name for a path, handling both object properties and array indices.
+  String _getDisplayName(String path) {
+    // Handle array indices: items[0] -> 0
+    if (path.contains('[') && path.contains(']')) {
+      final startIndex = path.lastIndexOf('[');
+      final endIndex = path.lastIndexOf(']');
+      if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+        return path.substring(startIndex + 1, endIndex);
+      }
+    }
+    
+    // Handle object properties: settings.theme -> theme
+    return path.split('.').last;
   }
 
   @override
@@ -105,7 +232,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     bool isExpanded,
     String type,
   ) {
-    final displayName = path.isEmpty ? 'root' : path.split('.').last;
+    final displayName = path.isEmpty ? 'root' : _getDisplayName(path);
     final itemCount = value is List ? value.length : (value as Map).length;
     final typeIcon = type == 'array' ? Icons.list : Icons.folder;
     final typeColor = type == 'array'
@@ -712,7 +839,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   }
 
   Widget _buildLeafNode(String path, dynamic value) {
-    final displayName = path.split('.').last;
+    final displayName = _getDisplayName(path);
     final valueColor = _getValueColor(value);
     final displayValue = _getDisplayValue(value);
     final isEditing = _editingPath == path;

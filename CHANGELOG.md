@@ -32,6 +32,7 @@ Spectre JSON is a beautiful and feature-rich JSON editor widget for Flutter with
 - **Line Numbers**: Line numbers display in text editor mode
 - **Scroll Synchronization**: Synchronized scrolling between line numbers and text
 - **Debounced Input**: Optimized text input with debouncing for better performance
+- **Smart Expansion Control**: Configurable tree view expansion modes (none, objects, arrays, objectsAndArrays, all, levels)
 
 #### Theme System
 - **RedPandaTheme**: Beautiful dark theme with red accents (default)
@@ -51,6 +52,8 @@ Spectre JSON is a beautiful and feature-rich JSON editor widget for Flutter with
 - **onExpansionChanged**: Expansion state change callback
 - **onCollapse**: Collapse event callback
 - **viewType**: View mode selection (dual, treeOnly, rawOnly)
+- **expansionMode**: Tree view expansion control (none, objects, arrays, objectsAndArrays, all, levels)
+- **maxExpansionLevel**: Maximum levels to expand when using levels mode
 
 #### Action Buttons
 - **Format**: Beautify JSON with proper indentation

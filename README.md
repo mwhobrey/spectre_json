@@ -177,6 +177,55 @@ JsonEditor(
 )
 ```
 
+### Expansion Modes
+
+Control how tree view nodes are expanded by default:
+
+```dart
+// No expansion (default) - only root node is expanded
+JsonEditor(
+  initialData: data,
+  onDataChanged: (newData) {},
+  expansionMode: ExpansionMode.none,
+)
+
+// Expand all object nodes (including nested objects)
+JsonEditor(
+  initialData: data,
+  onDataChanged: (newData) {},
+  expansionMode: ExpansionMode.objects,
+)
+
+// Expand all array nodes (including nested arrays)
+JsonEditor(
+  initialData: data,
+  onDataChanged: (newData) {},
+  expansionMode: ExpansionMode.arrays,
+)
+
+// Expand both objects and arrays
+JsonEditor(
+  initialData: data,
+  onDataChanged: (newData) {},
+  expansionMode: ExpansionMode.objectsAndArrays,
+)
+
+// Expand everything
+JsonEditor(
+  initialData: data,
+  onDataChanged: (newData) {},
+  expansionMode: ExpansionMode.all,
+)
+
+// Expand only the top 3 levels
+JsonEditor(
+  initialData: data,
+  onDataChanged: (newData) {},
+  expansionMode: ExpansionMode.levels,
+  maxExpansionLevel: 3,
+)
+```
+
 ## 🎨 Available Themes
 
 ### Built-in Themes
@@ -224,6 +273,8 @@ The main widget for editing JSON data.
 | `onExpansionChanged` | `Function(bool)?` | ❌ | - | Callback when expansion state changes |
 | `onCollapse` | `VoidCallback?` | ❌ | - | Callback when editor is collapsed |
 | `viewType` | `ViewType` | ❌ | `ViewType.dual` | The view type to display (dual, treeOnly, rawOnly) |
+| `expansionMode` | `ExpansionMode` | ❌ | `ExpansionMode.none` | Controls how tree view nodes are expanded by default |
+| `maxExpansionLevel` | `int` | ❌ | `2` | Maximum levels to expand when using `ExpansionMode.levels` |
 
 ### JsonEditorTheme
 

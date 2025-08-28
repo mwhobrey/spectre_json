@@ -227,33 +227,127 @@ class _ExamplesPageState extends State<ExamplesPage> {
       'readOnly': false,
       'viewType': ViewType.treeOnly,
     },
-    {
-      'title': 'Raw Editor Only',
-      'description': 'Shows only the raw JSON editor (no tabs)',
-      'data': {
-        'name': 'Raw Editor Example',
-        'configuration': {
-          'api': {
-            'baseUrl': 'https://api.example.com',
-            'timeout': 30000,
-            'retries': 3,
-          },
-          'features': {
-            'caching': true,
-            'logging': false,
-            'analytics': true,
-          },
-        },
-        'metadata': {
-          'version': '1.0.0',
-          'environment': 'production',
-          'lastUpdated': '2024-01-15T12:00:00Z',
-        },
-      },
-      'allowCopy': true,
-      'readOnly': false,
-      'viewType': ViewType.rawOnly,
-    },
+         {
+       'title': 'Raw Editor Only',
+       'description': 'Shows only the raw JSON editor (no tabs)',
+       'data': {
+         'name': 'Raw Editor Example',
+         'configuration': {
+           'api': {
+             'baseUrl': 'https://api.example.com',
+             'timeout': 30000,
+             'retries': 3,
+           },
+           'features': {
+             'caching': true,
+             'logging': false,
+             'analytics': true,
+           },
+         },
+         'metadata': {
+           'version': '1.0.0',
+           'environment': 'production',
+           'lastUpdated': '2024-01-15T12:00:00Z',
+         },
+       },
+       'allowCopy': true,
+       'readOnly': false,
+       'viewType': ViewType.rawOnly,
+     },
+     {
+       'title': 'Objects Expanded',
+       'description': 'Shows tree view with all objects expanded by default',
+       'data': {
+         'name': 'Expansion Demo',
+         'settings': {
+           'theme': 'dark',
+           'language': 'en',
+           'nested': {
+             'level1': {
+               'level2': 'deep value',
+             },
+           },
+         },
+         'items': [
+           'item1',
+           'item2',
+           {
+             'nestedItem': 'value',
+           },
+         ],
+         'config': {
+           'enabled': true,
+           'options': ['opt1', 'opt2'],
+         },
+       },
+       'allowCopy': true,
+       'readOnly': false,
+       'viewType': ViewType.treeOnly,
+       'expansionMode': ExpansionMode.objects,
+     },
+     {
+       'title': 'Arrays Expanded',
+       'description': 'Shows tree view with all arrays expanded by default',
+       'data': {
+         'name': 'Array Expansion Demo',
+         'settings': {
+           'theme': 'dark',
+           'language': 'en',
+           'nested': {
+             'level1': {
+               'level2': 'deep value',
+             },
+           },
+         },
+         'items': [
+           'item1',
+           'item2',
+           {
+             'nestedItem': 'value',
+           },
+         ],
+         'config': {
+           'enabled': true,
+           'options': ['opt1', 'opt2'],
+         },
+       },
+       'allowCopy': true,
+       'readOnly': false,
+       'viewType': ViewType.treeOnly,
+       'expansionMode': ExpansionMode.arrays,
+     },
+     {
+       'title': 'Level 2 Expansion',
+       'description': 'Shows tree view expanded to 2 levels deep',
+       'data': {
+         'name': 'Level Expansion Demo',
+         'settings': {
+           'theme': 'dark',
+           'language': 'en',
+           'nested': {
+             'level1': {
+               'level2': 'deep value',
+             },
+           },
+         },
+         'items': [
+           'item1',
+           'item2',
+           {
+             'nestedItem': 'value',
+           },
+         ],
+         'config': {
+           'enabled': true,
+           'options': ['opt1', 'opt2'],
+         },
+       },
+       'allowCopy': true,
+       'readOnly': false,
+       'viewType': ViewType.treeOnly,
+       'expansionMode': ExpansionMode.levels,
+       'maxExpansionLevel': 2,
+     },
   ];
 
   @override
@@ -413,7 +507,9 @@ class _ExamplesPageState extends State<ExamplesPage> {
                 allowCopy: currentExample['allowCopy'],
                 readOnly: currentExample['readOnly'],
                 theme: _themes[_currentThemeIndex]['theme'],
-                viewType: currentExample['viewType'] ?? ViewType.dual,
+                                 viewType: currentExample['viewType'] ?? ViewType.dual,
+                 expansionMode: currentExample['expansionMode'] ?? ExpansionMode.none,
+                 maxExpansionLevel: currentExample['maxExpansionLevel'] ?? 2,
               ),
             ),
           ),
