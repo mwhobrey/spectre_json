@@ -204,6 +204,56 @@ class _ExamplesPageState extends State<ExamplesPage> {
       'allowCopy': true,
       'readOnly': false,
     },
+    {
+      'title': 'Tree View Only',
+      'description': 'Shows only the tree view interface (no tabs)',
+      'data': {
+        'name': 'Tree View Example',
+        'settings': {
+          'theme': 'dark',
+          'language': 'en',
+          'notifications': true,
+        },
+        'items': ['item1', 'item2', 'item3'],
+        'nested': {
+          'level1': {
+            'level2': {
+              'level3': 'deep value',
+            },
+          },
+        },
+      },
+      'allowCopy': true,
+      'readOnly': false,
+      'viewType': ViewType.treeOnly,
+    },
+    {
+      'title': 'Raw Editor Only',
+      'description': 'Shows only the raw JSON editor (no tabs)',
+      'data': {
+        'name': 'Raw Editor Example',
+        'configuration': {
+          'api': {
+            'baseUrl': 'https://api.example.com',
+            'timeout': 30000,
+            'retries': 3,
+          },
+          'features': {
+            'caching': true,
+            'logging': false,
+            'analytics': true,
+          },
+        },
+        'metadata': {
+          'version': '1.0.0',
+          'environment': 'production',
+          'lastUpdated': '2024-01-15T12:00:00Z',
+        },
+      },
+      'allowCopy': true,
+      'readOnly': false,
+      'viewType': ViewType.rawOnly,
+    },
   ];
 
   @override
@@ -363,6 +413,7 @@ class _ExamplesPageState extends State<ExamplesPage> {
                 allowCopy: currentExample['allowCopy'],
                 readOnly: currentExample['readOnly'],
                 theme: _themes[_currentThemeIndex]['theme'],
+                viewType: currentExample['viewType'] ?? ViewType.dual,
               ),
             ),
           ),

@@ -1,10 +1,52 @@
 name: spectre
-description: A beautiful and feature-rich JSON editor widget for Flutter with syntax highlighting, tree view, and customizable themes.
+description: A beautiful and feature-rich JSON editor widget for Flutter with syntax highlighting, tree view navigation, real-time validation, and customizable themes. Perfect for configuration editors, data visualization, and JSON manipulation in Flutter apps.
 version: 1.0.0
 homepage: https://github.com/mwhobrey/spectre
 repository: https://github.com/mwhobrey/spectre
 issue_tracker: https://github.com/mwhobrey/spectre/issues
 documentation: https://github.com/mwhobrey/spectre#readme
+
+keywords:
+  - json
+  - editor
+  - syntax-highlighting
+  - tree-view
+  - validation
+  - themes
+  - configuration
+  - data-visualization
+  - flutter-widget
+  - code-editor
+  - json-viewer
+  - json-formatter
+  - clipboard
+  - copy-paste
+  - dark-theme
+  - light-theme
+  - material-design
+  - responsive
+  - cross-platform
+
+topics:
+  - json
+  - editor
+  - syntax-highlighting
+  - tree-view
+  - validation
+  - themes
+  - configuration
+  - data-visualization
+  - flutter-widget
+  - code-editor
+  - json-viewer
+  - json-formatter
+  - clipboard
+  - copy-paste
+  - dark-theme
+  - light-theme
+  - material-design
+  - responsive
+  - cross-platform
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

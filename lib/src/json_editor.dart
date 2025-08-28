@@ -7,6 +7,18 @@ import 'theme/red_panda_theme.dart';
 import 'widgets/syntax_highlighted_text.dart';
 import 'widgets/json_tree_view.dart';
 
+/// Enum defining the available view types for the JSON editor.
+enum ViewType {
+  /// Shows both tree view and raw JSON editor with tabs to switch between them.
+  dual,
+  
+  /// Shows only the tree view interface.
+  treeOnly,
+  
+  /// Shows only the raw JSON editor interface.
+  rawOnly,
+}
+
 /// A beautiful and feature-rich JSON editor widget for Flutter.
 /// 
 /// This widget provides a dual-view JSON editor with syntax highlighting,
@@ -86,6 +98,15 @@ class JsonEditor extends StatefulWidget {
   /// You can create custom themes by extending JsonEditorTheme.
   final JsonEditorTheme? theme;
 
+  /// The view type to display in the editor.
+  /// 
+  /// - [ViewType.dual]: Shows both tree view and raw JSON editor with tabs (default)
+  /// - [ViewType.treeOnly]: Shows only the tree view interface
+  /// - [ViewType.rawOnly]: Shows only the raw JSON editor interface
+  /// 
+  /// Defaults to [ViewType.dual].
+  final ViewType viewType;
+
   const JsonEditor({
     super.key,
     required this.initialData,
@@ -97,6 +118,7 @@ class JsonEditor extends StatefulWidget {
     this.isExpanded,
     this.onExpansionChanged,
     this.theme,
+    this.viewType = ViewType.dual,
   });
 
   @override
@@ -134,7 +156,9 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    // Initialize TabController based on view type
+    final tabCount = widget.viewType == ViewType.dual ? 2 : 0;
+    _tabController = TabController(length: tabCount, vsync: this);
     _lineNumbersScrollController = ScrollController();
     _textScrollController = ScrollController();
     _textFieldFocusNode = FocusNode();
@@ -182,6 +206,17 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     // Update theme when it changes
     if (oldWidget.theme != widget.theme) {
       _theme = widget.theme ?? RedPandaTheme();
+    }
+    
+    // Update TabController when view type changes
+    if (oldWidget.viewType != widget.viewType) {
+      final oldTabCount = oldWidget.viewType == ViewType.dual ? 2 : 0;
+      final newTabCount = widget.viewType == ViewType.dual ? 2 : 0;
+      
+      if (oldTabCount != newTabCount) {
+        _tabController.dispose();
+        _tabController = TabController(length: newTabCount, vsync: this);
+      }
     }
   }
 
@@ -437,11 +472,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
           // Content
           if (_isExpanded) ...[
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const ClampingScrollPhysics(),
-                children: [_buildTreeView(), _buildRawJsonView()],
-              ),
+              child: _buildContent(),
             ),
 
             // Error Message
@@ -453,6 +484,21 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  Widget _buildContent() {
+    switch (widget.viewType) {
+      case ViewType.dual:
+        return TabBarView(
+          controller: _tabController,
+          physics: const ClampingScrollPhysics(),
+          children: [_buildTreeView(), _buildRawJsonView()],
+        );
+      case ViewType.treeOnly:
+        return _buildTreeView();
+      case ViewType.rawOnly:
+        return _buildRawJsonView();
+    }
   }
 
   Widget _buildHeader() {
@@ -477,10 +523,11 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
           ),
           const Spacer(),
 
-          // View Toggle
-          _buildViewToggle(),
-
-          const SizedBox(width: 12),
+          // View Toggle (only show in dual mode)
+          if (widget.viewType == ViewType.dual) ...[
+            _buildViewToggle(),
+            const SizedBox(width: 12),
+          ],
 
           // Action Buttons
           if (!widget.readOnly) ...[
