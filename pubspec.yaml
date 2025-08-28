@@ -62,4 +62,5 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
 flutter:
-  # No assets needed for this package
+  assets:
+    - assets/spectre_logo_t.png
