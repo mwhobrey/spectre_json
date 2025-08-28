@@ -24,6 +24,9 @@ class JsonTreeView extends StatefulWidget {
 }
 
 class _JsonTreeViewState extends State<JsonTreeView> {
+  // Special value to indicate parsing error
+  static const Object _PARSE_ERROR = Object();
+  
   final Set<String> _expandedNodes = <String>{};
   String? _editingPath;
   String? _editingKey;
@@ -451,9 +454,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
       parsedValue = _parseObjectValue(trimmedValue);
     }
 
-    if (parsedValue == null) {
-      _showError('Invalid value format');
-      return;
+    // Check if parsing failed (parsedValue is a special error indicator)
+    if (parsedValue == _PARSE_ERROR) {
+      return; // Error already shown by the parsing method
     }
 
     // Adding item with key="$trimmedKey", parsedValue=$parsedValue
@@ -517,48 +520,48 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     if (firstItem is String) {
       return value;
     }
-    if (firstItem is int) {
-      final intValue = int.tryParse(value);
-      if (intValue != null) return intValue;
-      _showError('Expected integer value');
-      return null;
-    }
-    if (firstItem is double) {
-      final doubleValue = double.tryParse(value);
-      if (doubleValue != null) return doubleValue;
-      _showError('Expected number value');
-      return null;
-    }
-    if (firstItem is bool) {
-      if (value.toLowerCase() == 'true') return true;
-      if (value.toLowerCase() == 'false') return false;
-      _showError('Expected boolean value (true/false)');
-      return null;
-    }
-    if (firstItem is List) {
-      if (value.startsWith('[') && value.endsWith(']')) {
-        try {
-          return jsonDecode(value);
-        } catch (e) {
-          _showError('Invalid array format');
-          return null;
-        }
-      }
-      _showError('Expected array format [item1, item2, ...]');
-      return null;
-    }
-    if (firstItem is Map) {
-      if (value.startsWith('{') && value.endsWith('}')) {
-        try {
-          return jsonDecode(value);
-        } catch (e) {
-          _showError('Invalid object format');
-          return null;
-        }
-      }
-      _showError('Expected object format {key: value}');
-      return null;
-    }
+         if (firstItem is int) {
+       final intValue = int.tryParse(value);
+       if (intValue != null) return intValue;
+       _showError('Expected integer value');
+       return _PARSE_ERROR;
+     }
+     if (firstItem is double) {
+       final doubleValue = double.tryParse(value);
+       if (doubleValue != null) return doubleValue;
+       _showError('Expected number value');
+       return _PARSE_ERROR;
+     }
+     if (firstItem is bool) {
+       if (value.toLowerCase() == 'true') return true;
+       if (value.toLowerCase() == 'false') return false;
+       _showError('Expected boolean value (true/false)');
+       return _PARSE_ERROR;
+     }
+     if (firstItem is List) {
+       if (value.startsWith('[') && value.endsWith(']')) {
+         try {
+           return jsonDecode(value);
+         } catch (e) {
+           _showError('Invalid array format');
+           return _PARSE_ERROR;
+         }
+       }
+       _showError('Expected array format [item1, item2, ...]');
+       return _PARSE_ERROR;
+     }
+     if (firstItem is Map) {
+       if (value.startsWith('{') && value.endsWith('}')) {
+         try {
+           return jsonDecode(value);
+         } catch (e) {
+           _showError('Invalid object format');
+           return _PARSE_ERROR;
+         }
+       }
+       _showError('Expected object format {key: value}');
+       return _PARSE_ERROR;
+     }
 
     return value;
   }
@@ -578,22 +581,22 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     if (value.toLowerCase() == 'null') {
       return null;
     }
-    if (value.startsWith('[') && value.endsWith(']')) {
-      try {
-        return jsonDecode(value);
-      } catch (e) {
-        _showError('Invalid array format');
-        return null;
-      }
-    }
-    if (value.startsWith('{') && value.endsWith('}')) {
-      try {
-        return jsonDecode(value);
-      } catch (e) {
-        _showError('Invalid object format');
-        return null;
-      }
-    }
+         if (value.startsWith('[') && value.endsWith(']')) {
+       try {
+         return jsonDecode(value);
+       } catch (e) {
+         _showError('Invalid array format');
+         return _PARSE_ERROR;
+       }
+     }
+     if (value.startsWith('{') && value.endsWith('}')) {
+       try {
+         return jsonDecode(value);
+       } catch (e) {
+         _showError('Invalid object format');
+         return _PARSE_ERROR;
+       }
+     }
     
     return value;
   }
