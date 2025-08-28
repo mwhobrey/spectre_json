@@ -345,6 +345,9 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
   }
 
   void _validateAndUpdateJson(String jsonText) {
+    // Preserve cursor position before validation
+    final currentSelection = _textController.selection;
+    
     try {
       final decoded = jsonDecode(jsonText) as Map<String, dynamic>;
       setState(() {
@@ -359,6 +362,13 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
         _errorMessage = 'Invalid JSON: $e';
       });
     }
+    
+    // Restore cursor position after validation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _textController.text.length >= currentSelection.end) {
+        _textController.selection = currentSelection;
+      }
+    });
   }
 
   void _onTextChanged(String text) {
