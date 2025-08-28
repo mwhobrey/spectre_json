@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spectre/spectre.dart';
+import 'package:spectre_json/spectre_json.dart';
 
 /// Simple test app to verify the Spectre package functionality
 void main() {
