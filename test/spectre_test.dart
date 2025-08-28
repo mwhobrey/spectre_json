@@ -58,8 +58,8 @@ void main() {
       await tester.enterText(textField, '{"name": "Updated", "age": 30}');
       await tester.pumpAndSettle();
 
-      // The callback should be called with debouncing
-      await tester.pump(const Duration(milliseconds: 500));
+      // The callback should be called with debouncing (wait for 750ms + buffer)
+      await tester.pump(const Duration(milliseconds: 800));
       
       expect(callbackCalled, isTrue);
       expect(callbackData, isNotNull);
@@ -89,6 +89,9 @@ void main() {
       final textField = find.byType(TextField);
       await tester.enterText(textField, '{"invalid": json}');
       await tester.pumpAndSettle();
+
+      // Wait for debounced validation to complete
+      await tester.pump(const Duration(milliseconds: 800));
 
       // Should show error state
       expect(find.textContaining('Invalid JSON'), findsOneWidget);
