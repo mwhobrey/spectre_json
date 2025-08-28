@@ -117,6 +117,7 @@ abstract class JsonEditorTheme {
   /// JsonEditorTheme.light(primaryColor: Colors.blue)
   /// ```
   factory JsonEditorTheme.light({Color? primaryColor}) {
+    final primary = primaryColor ?? Colors.blue;
     return JsonEditorTheme.fromColors(
       editorBackground: Colors.white,
       foreground: Colors.black87,
@@ -124,15 +125,15 @@ abstract class JsonEditorTheme {
       surfaceBackground: Colors.grey[100],
       lineNumbersBackground: Colors.grey[50],
       borderColor: Colors.grey[300],
-      primaryColor: primaryColor ?? Colors.blue,
+      primaryColor: primary,
       onPrimary: Colors.white,
-      errorColor: Colors.red,
+      errorColor: Colors.red[600],
       cursorColor: Colors.black87,
       stringColor: Colors.green[700],
-      numberColor: Colors.black87,
+      numberColor: Colors.blue[700],
       booleanColor: Colors.purple[700],
-      nullColor: Colors.purple[700],
-      punctuationColor: primaryColor ?? Colors.blue,
+      nullColor: Colors.orange[700],
+      punctuationColor: primary,
       keyColor: Colors.green[700],
     );
   }
@@ -148,6 +149,7 @@ abstract class JsonEditorTheme {
   /// JsonEditorTheme.dark(primaryColor: Colors.blue)
   /// ```
   factory JsonEditorTheme.dark({Color? primaryColor}) {
+    final primary = primaryColor ?? Colors.blue[400];
     return JsonEditorTheme.fromColors(
       editorBackground: Colors.grey[900],
       foreground: Colors.white,
@@ -155,15 +157,15 @@ abstract class JsonEditorTheme {
       surfaceBackground: Colors.grey[800],
       lineNumbersBackground: Colors.grey[850],
       borderColor: Colors.grey[700],
-      primaryColor: primaryColor ?? Colors.blue[400],
+      primaryColor: primary,
       onPrimary: Colors.white,
       errorColor: Colors.red[400],
       cursorColor: Colors.white,
       stringColor: Colors.green[400],
-      numberColor: Colors.white,
+      numberColor: Colors.blue[300],
       booleanColor: Colors.purple[400],
-      nullColor: Colors.purple[400],
-      punctuationColor: primaryColor ?? Colors.blue[400],
+      nullColor: Colors.orange[400],
+      punctuationColor: primary,
       keyColor: Colors.green[400],
     );
   }
@@ -239,13 +241,13 @@ class RedPandaTheme implements JsonEditorTheme {
   Color get stringColor => const Color(0xFFC0EE5D);
 
   @override
-  Color get numberColor => const Color(0xFFC7CED1);
+  Color get numberColor => const Color(0xFF5F93D3);
 
   @override
   Color get booleanColor => const Color(0xFFAC3980);
 
   @override
-  Color get nullColor => const Color(0xFFAC3980);
+  Color get nullColor => const Color(0xFFE67E22);
 
   @override
   Color get punctuationColor => const Color(0xFF5F93D3);

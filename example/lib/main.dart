@@ -72,6 +72,20 @@ class _ExamplesPageState extends State<ExamplesPage> {
         keyColor: Colors.purple[300]!,
       ),
     },
+    {
+      'name': 'Syntax Highlight Demo',
+      'theme': JsonEditorTheme.fromColors(
+        editorBackground: Colors.grey[900]!,
+        foreground: Colors.white,
+        primaryColor: Colors.cyan,
+        stringColor: Colors.lightGreen,
+        numberColor: Colors.orange,
+        booleanColor: Colors.pink,
+        nullColor: Colors.yellow,
+        punctuationColor: Colors.cyan,
+        keyColor: Colors.lightBlue,
+      ),
+    },
   ];
 
   /// List of example configurations demonstrating different use cases.
