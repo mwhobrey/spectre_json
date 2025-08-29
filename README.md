@@ -226,6 +226,27 @@ JsonEditor(
 )
 ```
 
+### Debugging Expansion Issues
+
+If you're experiencing issues with tree view expansion, you can enable debug mode to get detailed logging:
+
+```dart
+JsonEditor(
+  initialData: yourData,
+  onDataChanged: (data) => print('Data changed: $data'),
+  expansionMode: ExpansionMode.all,
+  maxExpansionLevel: 5,
+  debugMode: true, // Enable debug logging
+)
+```
+
+When debug mode is enabled, you'll see detailed console output showing:
+- Which expansion mode is being applied
+- What paths are being expanded
+- The final list of expanded nodes
+
+This can help identify if the expansion parameters are being received correctly and if the expansion logic is working as expected.
+
 ## 🎨 Available Themes
 
 ### Built-in Themes
@@ -275,6 +296,7 @@ The main widget for editing JSON data.
 | `viewType` | `ViewType` | ❌ | `ViewType.dual` | The view type to display (dual, treeOnly, rawOnly) |
 | `expansionMode` | `ExpansionMode` | ❌ | `ExpansionMode.none` | Controls how tree view nodes are expanded by default |
 | `maxExpansionLevel` | `int` | ❌ | `2` | Maximum levels to expand when using `ExpansionMode.levels` |
+| `debugMode` | `bool` | ❌ | `false` | Enable debug logging for troubleshooting expansion issues |
 
 ### JsonEditorTheme
 

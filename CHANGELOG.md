@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ Added
 - **Smart Expansion Control**: Configurable tree view expansion modes (none, objects, arrays, objectsAndArrays, all, levels)
 - **maxExpansionLevel**: Maximum levels to expand when using levels mode
+- **Debug Mode**: Enable detailed logging for troubleshooting expansion issues
 
 ## [1.0.0] - 2024-01-15
 

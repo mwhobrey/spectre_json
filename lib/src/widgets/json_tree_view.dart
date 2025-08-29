@@ -12,6 +12,7 @@ class JsonTreeView extends StatefulWidget {
   final JsonEditorTheme theme;
   final ExpansionMode expansionMode;
   final int maxExpansionLevel;
+  final bool debugMode;
 
   const JsonTreeView({
     super.key,
@@ -22,6 +23,7 @@ class JsonTreeView extends StatefulWidget {
     required this.theme,
     this.expansionMode = ExpansionMode.none,
     this.maxExpansionLevel = 2,
+    this.debugMode = false,
   });
 
   @override
@@ -60,43 +62,82 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
   /// Applies the expansion mode to determine which nodes should be expanded by default.
   void _applyExpansionMode() {
+    if (widget.debugMode) {
+      print('🔍 [SPECTRE DEBUG] Applying expansion mode: ${widget.expansionMode}');
+      print('🔍 [SPECTRE DEBUG] Max expansion level: ${widget.maxExpansionLevel}');
+      print('🔍 [SPECTRE DEBUG] Initial data type: ${widget.data.runtimeType}');
+      print('🔍 [SPECTRE DEBUG] Initial data keys: ${widget.data.keys.toList()}');
+    }
+    
     switch (widget.expansionMode) {
       case ExpansionMode.none:
         // Only root node is expanded (already added in initState)
+        if (widget.debugMode) {
+          print('🔍 [SPECTRE DEBUG] ExpansionMode.none - only root expanded');
+        }
         break;
         
       case ExpansionMode.objects:
+        if (widget.debugMode) {
+          print('🔍 [SPECTRE DEBUG] ExpansionMode.objects - expanding objects');
+        }
         _expandObjects(widget.data, '');
         break;
         
       case ExpansionMode.arrays:
+        if (widget.debugMode) {
+          print('🔍 [SPECTRE DEBUG] ExpansionMode.arrays - expanding arrays');
+        }
         _expandArrays(widget.data, '');
         break;
         
       case ExpansionMode.objectsAndArrays:
+        if (widget.debugMode) {
+          print('🔍 [SPECTRE DEBUG] ExpansionMode.objectsAndArrays - expanding both');
+        }
         _expandObjects(widget.data, '');
         _expandArrays(widget.data, '');
         break;
         
       case ExpansionMode.all:
+        if (widget.debugMode) {
+          print('🔍 [SPECTRE DEBUG] ExpansionMode.all - expanding everything');
+        }
         _expandAll(widget.data, '');
         break;
         
       case ExpansionMode.levels:
+        if (widget.debugMode) {
+          print('🔍 [SPECTRE DEBUG] ExpansionMode.levels - expanding up to level ${widget.maxExpansionLevel}');
+        }
         _expandLevels(widget.data, '', 0);
         break;
+    }
+    
+    if (widget.debugMode) {
+      print('🔍 [SPECTRE DEBUG] Final expanded nodes: ${_expandedNodes.toList()}');
     }
   }
 
   /// Expands all object nodes recursively.
   void _expandObjects(dynamic value, String path) {
+    if (widget.debugMode) {
+      print('🔍 [SPECTRE DEBUG] _expandObjects - path: "$path", value type: ${value.runtimeType}');
+    }
+    
     if (value is Map) {
       _expandedNodes.add(path);
+      if (widget.debugMode) {
+        print('🔍 [SPECTRE DEBUG] _expandObjects - added Map path: "$path"');
+      }
       for (final entry in value.entries) {
         final newPath = path.isEmpty ? entry.key : '$path.${entry.key}';
         _expandObjects(entry.value, newPath);
       }
     } else if (value is List) {
+      if (widget.debugMode) {
+        print('🔍 [SPECTRE DEBUG] _expandObjects - traversing List at path: "$path"');
+      }
       for (int i = 0; i < value.length; i++) {
         final newPath = '$path[$i]';
         _expandObjects(value[i], newPath);
@@ -106,8 +147,15 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
   /// Expands all array nodes recursively.
   void _expandArrays(dynamic value, String path) {
+    if (widget.debugMode) {
+      print('🔍 [SPECTRE DEBUG] _expandArrays - path: "$path", value type: ${value.runtimeType}');
+    }
+    
     if (value is List) {
       _expandedNodes.add(path);
+      if (widget.debugMode) {
+        print('🔍 [SPECTRE DEBUG] _expandArrays - added List path: "$path"');
+      }
       for (int i = 0; i < value.length; i++) {
         final newPath = '$path[$i]';
         _expandArrays(value[i], newPath);
@@ -115,6 +163,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     } else if (value is Map) {
       // Expand the parent object so we can see arrays inside it
       _expandedNodes.add(path);
+      if (widget.debugMode) {
+        print('🔍 [SPECTRE DEBUG] _expandArrays - added Map path: "$path" (contains arrays)');
+      }
       for (final entry in value.entries) {
         final newPath = path.isEmpty ? entry.key : '$path.${entry.key}';
         _expandArrays(entry.value, newPath);
@@ -124,8 +175,15 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
   /// Expands all nodes recursively.
   void _expandAll(dynamic value, String path) {
+    if (widget.debugMode) {
+      print('🔍 [SPECTRE DEBUG] _expandAll - path: "$path", value type: ${value.runtimeType}');
+    }
+    
     if (value is Map || value is List) {
       _expandedNodes.add(path);
+      if (widget.debugMode) {
+        print('🔍 [SPECTRE DEBUG] _expandAll - added path: "$path"');
+      }
     }
     
     if (value is Map) {
@@ -143,9 +201,16 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
   /// Expands nodes up to the specified level.
   void _expandLevels(dynamic value, String path, int currentLevel) {
+    if (widget.debugMode) {
+      print('🔍 [SPECTRE DEBUG] _expandLevels - path: "$path", currentLevel: $currentLevel, maxLevel: ${widget.maxExpansionLevel}, value type: ${value.runtimeType}');
+    }
+    
     if (currentLevel < widget.maxExpansionLevel) {
       if (value is Map || value is List) {
         _expandedNodes.add(path);
+        if (widget.debugMode) {
+          print('🔍 [SPECTRE DEBUG] _expandLevels - added path: "$path" at level $currentLevel');
+        }
       }
       
       if (value is Map) {
@@ -159,6 +224,8 @@ class _JsonTreeViewState extends State<JsonTreeView> {
           _expandLevels(value[i], newPath, currentLevel + 1);
         }
       }
+    } else if (widget.debugMode) {
+      print('🔍 [SPECTRE DEBUG] _expandLevels - reached max level $currentLevel, stopping expansion');
     }
   }
 

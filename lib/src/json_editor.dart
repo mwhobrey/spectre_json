@@ -149,6 +149,14 @@ class JsonEditor extends StatefulWidget {
   /// Defaults to 2.
   final int maxExpansionLevel;
 
+  /// Enable debug mode to log expansion and other internal operations.
+  /// 
+  /// When true, debug information will be printed to the console.
+  /// This is useful for troubleshooting expansion issues.
+  /// 
+  /// Defaults to false.
+  final bool debugMode;
+
   const JsonEditor({
     super.key,
     required this.initialData,
@@ -163,6 +171,7 @@ class JsonEditor extends StatefulWidget {
     this.viewType = ViewType.dual,
     this.expansionMode = ExpansionMode.none,
     this.maxExpansionLevel = 2,
+    this.debugMode = false,
   });
 
   @override
@@ -688,6 +697,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
               theme: _theme,
               expansionMode: widget.expansionMode,
               maxExpansionLevel: widget.maxExpansionLevel,
+              debugMode: widget.debugMode,
             ),
           ),
         ),

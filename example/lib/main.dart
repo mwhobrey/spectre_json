@@ -348,6 +348,63 @@ class _ExamplesPageState extends State<ExamplesPage> {
        'expansionMode': ExpansionMode.levels,
        'maxExpansionLevel': 2,
      },
+     {
+       'title': 'Debug: Accept Offer Payload',
+       'description': 'Complex API payload with debug mode enabled to test expansion',
+       'data': {
+         "offerId": "offer_12345",
+         "userId": "user_67890",
+         "acceptanceDetails": {
+           "timestamp": "2024-01-15T10:30:00Z",
+           "ipAddress": "192.168.1.100",
+           "userAgent": "Mozilla/5.0...",
+           "metadata": {
+             "sessionId": "sess_abc123",
+             "deviceInfo": {
+               "platform": "desktop",
+               "browser": "chrome",
+               "version": "120.0.0.0"
+             },
+             "location": {
+               "country": "US",
+               "region": "CA",
+               "city": "San Francisco"
+             }
+           }
+         },
+         "terms": {
+           "accepted": true,
+           "version": "2.1",
+           "sections": [
+             {
+               "id": "privacy",
+               "accepted": true,
+               "timestamp": "2024-01-15T10:30:00Z"
+             },
+             {
+               "id": "terms",
+               "accepted": true,
+               "timestamp": "2024-01-15T10:30:00Z"
+             }
+           ]
+         },
+         "paymentInfo": {
+           "method": "credit_card",
+           "details": {
+             "last4": "1234",
+             "brand": "visa",
+             "expiryMonth": 12,
+             "expiryYear": 2025
+           }
+         }
+       },
+       'allowCopy': true,
+       'readOnly': false,
+       'viewType': ViewType.treeOnly,
+       'expansionMode': ExpansionMode.all,
+       'maxExpansionLevel': 5,
+       'debugMode': true,
+     },
   ];
 
   @override
@@ -507,9 +564,10 @@ class _ExamplesPageState extends State<ExamplesPage> {
                 allowCopy: currentExample['allowCopy'],
                 readOnly: currentExample['readOnly'],
                 theme: _themes[_currentThemeIndex]['theme'],
-                                 viewType: currentExample['viewType'] ?? ViewType.dual,
-                 expansionMode: currentExample['expansionMode'] ?? ExpansionMode.none,
-                 maxExpansionLevel: currentExample['maxExpansionLevel'] ?? 2,
+                                                 viewType: currentExample['viewType'] ?? ViewType.dual,
+                expansionMode: currentExample['expansionMode'] ?? ExpansionMode.none,
+                maxExpansionLevel: currentExample['maxExpansionLevel'] ?? 2,
+                debugMode: currentExample['debugMode'] ?? false,
               ),
             ),
           ),
