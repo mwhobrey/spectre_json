@@ -13,6 +13,7 @@ class JsonTreeView extends StatefulWidget {
   final ExpansionMode expansionMode;
   final int maxExpansionLevel;
   final bool debugMode;
+  final bool skipDeleteConfirmation;
 
   const JsonTreeView({
     super.key,
@@ -24,6 +25,7 @@ class JsonTreeView extends StatefulWidget {
     this.expansionMode = ExpansionMode.none,
     this.maxExpansionLevel = 2,
     this.debugMode = false,
+    this.skipDeleteConfirmation = false,
   });
 
   @override
@@ -41,12 +43,16 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   final TextEditingController _editController = TextEditingController();
   final TextEditingController _valueController = TextEditingController();
   final FocusNode _editFocusNode = FocusNode();
+  bool _skipDeleteConfirmation = false;
 
   @override
   void initState() {
     super.initState();
     // Always expand root node
     _expandedNodes.add('');
+    
+    // Initialize skip delete confirmation preference
+    _skipDeleteConfirmation = widget.skipDeleteConfirmation;
     
     // Apply expansion mode
     _applyExpansionMode();
@@ -1097,29 +1103,69 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   }
 
   void _deleteItem(String path, String displayName) {
+    // Skip confirmation if user has chosen "Don't ask again"
+    if (_skipDeleteConfirmation) {
+      _confirmDeleteItem(path);
+      return;
+    }
+
     // Show confirmation dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete Item'),
-          content: Text('Are you sure you want to delete "$displayName"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _confirmDeleteItem(path);
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: widget.theme.errorColor,
+        bool dontAskAgain = false;
+        
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text('Delete Item'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Are you sure you want to delete "$displayName"?'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: dontAskAgain,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            dontAskAgain = value ?? false;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('Don\'t ask again'),
+                    ],
+                  ),
+                ],
               ),
-              child: Text('Delete'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Update the skip confirmation preference
+                    if (dontAskAgain) {
+                      setState(() {
+                        _skipDeleteConfirmation = true;
+                      });
+                    }
+                    
+                    Navigator.of(context).pop();
+                    _confirmDeleteItem(path);
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: widget.theme.errorColor,
+                  ),
+                  child: Text('Delete'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

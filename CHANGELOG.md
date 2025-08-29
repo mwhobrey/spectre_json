@@ -5,6 +5,17 @@ All notable changes to the Spectre JSON package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2024-12-19
+
+### ✨ Added
+- **"Don't Ask Again" Option**: Added checkbox in delete confirmation dialog to skip future confirmations
+- **Skip Delete Confirmation Parameter**: Added `skipDeleteConfirmation` parameter to JsonEditor for programmatic control
+- **Enhanced Delete UX**: Improved delete workflow with persistent user preferences
+
+### 🔗 Fixed
+- **Package References**: Fixed pub badge URL and documentation links to correctly point to `spectre_json` package
+- **Documentation**: Updated README version reference to match current package version
+
 ## [1.1.3] - 2024-12-19
 
 ### ✨ Added

@@ -157,6 +157,15 @@ class JsonEditor extends StatefulWidget {
   /// Defaults to false.
   final bool debugMode;
 
+  /// Whether to skip delete confirmation dialogs.
+  /// 
+  /// When true, delete operations will not show confirmation dialogs.
+  /// Users can also set this preference via the "Don't ask again" checkbox
+  /// in the delete confirmation dialog.
+  /// 
+  /// Defaults to false.
+  final bool skipDeleteConfirmation;
+
   const JsonEditor({
     super.key,
     required this.initialData,
@@ -172,6 +181,7 @@ class JsonEditor extends StatefulWidget {
     this.expansionMode = ExpansionMode.none,
     this.maxExpansionLevel = 2,
     this.debugMode = false,
+    this.skipDeleteConfirmation = false,
   });
 
   @override
@@ -698,6 +708,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
               expansionMode: widget.expansionMode,
               maxExpansionLevel: widget.maxExpansionLevel,
               debugMode: widget.debugMode,
+              skipDeleteConfirmation: widget.skipDeleteConfirmation,
             ),
           ),
         ),

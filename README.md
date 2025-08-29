@@ -25,7 +25,7 @@ Add `spectre_json` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spectre_json: ^1.1.3
+  spectre_json: ^1.1.4
 ```
 
 Then run:
@@ -226,6 +226,23 @@ JsonEditor(
 )
 ```
 
+### Delete Confirmation
+
+The JSON editor includes a delete confirmation dialog to prevent accidental deletions. Users can choose to skip future confirmations:
+
+```dart
+// Skip delete confirmations programmatically
+JsonEditor(
+  initialData: yourData,
+  onDataChanged: (data) {},
+  skipDeleteConfirmation: true, // Skip all delete confirmations
+)
+
+// Or let users set the preference via the dialog
+// Users can check "Don't ask again" in the delete confirmation dialog
+// to skip future confirmations for the current session
+```
+
 ### Debugging Expansion Issues
 
 If you're experiencing issues with tree view expansion, you can enable debug mode to get detailed logging:
@@ -314,6 +331,7 @@ The main widget for editing JSON data.
 | `expansionMode` | `ExpansionMode` | ❌ | `ExpansionMode.none` | Controls how tree view nodes are expanded by default |
 | `maxExpansionLevel` | `int` | ❌ | `2` | Maximum levels to expand when using `ExpansionMode.levels` |
 | `debugMode` | `bool` | ❌ | `false` | Enable debug logging for troubleshooting expansion issues |
+| `skipDeleteConfirmation` | `bool` | ❌ | `false` | Skip delete confirmation dialogs (can also be set via "Don't ask again" checkbox) |
 
 ### JsonEditorTheme
 
@@ -371,7 +389,7 @@ Base class for custom themes with the following color properties:
 
 ### Tree View Actions
 - **Edit**: Click to edit values and keys inline
-- **Delete**: Remove properties and array items with confirmation dialog
+- **Delete**: Remove properties and array items with confirmation dialog and "Don't ask again" option
 - **Add**: Add new properties to objects or items to arrays
 - **Copy**: Copy individual values, keys, or entire nodes
 
