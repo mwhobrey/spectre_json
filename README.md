@@ -25,7 +25,7 @@ Add `spectre_json` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spectre_json: ^1.1.1
+  spectre_json: ^1.1.2
 ```
 
 Then run:
