@@ -5,6 +5,17 @@ All notable changes to the Spectre JSON package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2024-12-19
+
+### ✨ Added
+- **Cancel Button for Add Property**: Added cancel button (X) when adding new properties or array items
+- **Delete Functionality**: Added delete button for removing properties and array items with confirmation dialog
+- **Enhanced UX**: Improved user experience with better action button layout and confirmation dialogs
+
+### 🔗 Fixed
+- **Package References**: Fixed pub badge URL and documentation links to correctly point to `spectre_json` package
+- **Documentation**: Updated README version reference to match current package version
+
 ## [1.1.2] - 2024-12-19
 
 ### 🔗 Fixed

@@ -558,21 +558,45 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   }
 
   Widget _buildAddItemActionButton(String path, dynamic parentValue, String type, String key, String value) {
-    return GestureDetector(
-      onTap: () => _finishAddingItem(path, parentValue, type, key, value),
-      child: Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          color: widget.theme.primaryColor,
-          borderRadius: BorderRadius.circular(4),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Cancel button
+        GestureDetector(
+          onTap: () => _cancelAddingItem(),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: widget.theme.errorColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 14,
+            ),
+          ),
         ),
-        child: Icon(
-          Icons.check,
-          color: Colors.white,
-          size: 14,
+        const SizedBox(width: 4),
+        // Confirm button
+        GestureDetector(
+          onTap: () => _finishAddingItem(path, parentValue, type, key, value),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: widget.theme.primaryColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              Icons.check,
+              color: Colors.white,
+              size: 14,
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -634,6 +658,16 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     });
   }
 
+  void _cancelAddingItem() {
+    setState(() {
+      _addingToPath = null;
+    });
+    
+    // Clear the controllers
+    _editController.clear();
+    _valueController.clear();
+  }
+
   void _finishAddingItem(String path, dynamic parentValue, String type, String key, String value) {
     if (_addingToPath != path) return;
 
@@ -681,6 +715,10 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     setState(() {
       _addingToPath = null;
     });
+    
+    // Clear the controllers
+    _editController.clear();
+    _valueController.clear();
   }
 
   String _getSuggestedKey(dynamic parentValue) {
@@ -982,6 +1020,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
           // Action Buttons
           if (!widget.readOnly) ...[
             _buildEditButton(path, value, displayName),
+            _buildDeleteButton(path, displayName),
             _buildCopyButton(value, displayName),
           ] else if (widget.allowCopy) ...[
             _buildCopyButton(value, displayName),
@@ -1036,6 +1075,105 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         ),
       ),
     );
+  }
+
+  Widget _buildDeleteButton(String path, String displayName) {
+    return GestureDetector(
+      onTap: () => _deleteItem(path, displayName),
+      child: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: widget.theme.surfaceBackground,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Icon(
+          Icons.delete,
+          color: widget.theme.errorColor,
+          size: 14,
+        ),
+      ),
+    );
+  }
+
+  void _deleteItem(String path, String displayName) {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Item'),
+          content: Text('Are you sure you want to delete "$displayName"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _confirmDeleteItem(path);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: widget.theme.errorColor,
+              ),
+              child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteItem(String path) {
+    final parts = _parsePath(path);
+    dynamic current = widget.data;
+    
+    // Navigate to the parent of the target
+    for (int i = 0; i < parts.length - 1; i++) {
+      final part = parts[i];
+      if (part is String) {
+        if (current is Map && current.containsKey(part)) {
+          current = current[part];
+        } else {
+          return; // Path not found
+        }
+      } else if (part is int) {
+        if (current is List && part >= 0 && part < current.length) {
+          current = current[part];
+        } else {
+          return; // Path not found
+        }
+      } else {
+        return; // Invalid path
+      }
+    }
+    
+    // Delete the item
+    final lastPart = parts.last;
+    if (lastPart is String && current is Map && current.containsKey(lastPart)) {
+      current.remove(lastPart);
+      widget.onDataChanged(Map<String, dynamic>.from(widget.data));
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted "$lastPart"'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else if (lastPart is int && current is List && lastPart >= 0 && lastPart < current.length) {
+      current.removeAt(lastPart);
+      widget.onDataChanged(Map<String, dynamic>.from(widget.data));
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted item at index $lastPart'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _startEditing(String path, dynamic value) {

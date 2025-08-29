@@ -25,7 +25,7 @@ Add `spectre_json` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spectre_json: ^1.1.2
+  spectre_json: ^1.1.3
 ```
 
 Then run:
@@ -352,6 +352,7 @@ Base class for custom themes with the following color properties:
 - Expandable/collapsible nodes
 - Inline editing of values and keys
 - Add new properties and array items
+- Delete properties and array items with confirmation
 - Intelligent type inference for arrays
 - Copy individual values
 
@@ -367,6 +368,12 @@ Base class for custom themes with the following color properties:
 - **Validate**: Check JSON validity
 - **Copy**: Copy JSON to clipboard
 - **Paste**: Paste JSON from clipboard
+
+### Tree View Actions
+- **Edit**: Click to edit values and keys inline
+- **Delete**: Remove properties and array items with confirmation dialog
+- **Add**: Add new properties to objects or items to arrays
+- **Copy**: Copy individual values, keys, or entire nodes
 
 ## 📱 Platform Support
 
