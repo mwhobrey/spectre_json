@@ -2,7 +2,7 @@
 
 A beautiful and feature-rich JSON editor widget for Flutter with syntax highlighting, tree view navigation, real-time validation, and customizable themes.
 
-[![pub package](https://img.shields.io/pub/v/spectre.svg)](https://pub.dev/packages/spectre)
+[![pub package](https://img.shields.io/pub/v/spectre_json.svg)](https://pub.dev/packages/spectre_json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Flutter](https://img.shields.io/badge/Flutter-3.10+-blue.svg)](https://flutter.dev)
 
@@ -25,7 +25,7 @@ Add `spectre_json` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spectre_json: ^1.0.0
+  spectre_json: ^1.1.1
 ```
 
 Then run:
