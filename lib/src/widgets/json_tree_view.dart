@@ -53,6 +53,25 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   }
 
   @override
+  void didUpdateWidget(JsonTreeView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Check if data has changed
+    if (oldWidget.data != widget.data) {
+      if (widget.debugMode) {
+        print('🔍 [SPECTRE DEBUG] Data changed, re-applying expansion mode');
+        print('🔍 [SPECTRE DEBUG] Old data keys: ${oldWidget.data.keys.toList()}');
+        print('🔍 [SPECTRE DEBUG] New data keys: ${widget.data.keys.toList()}');
+      }
+      
+      // Clear existing expanded nodes and re-apply expansion mode
+      _expandedNodes.clear();
+      _expandedNodes.add(''); // Always expand root node
+      _applyExpansionMode();
+    }
+  }
+
+  @override
   void dispose() {
     _editController.dispose();
     _valueController.dispose();

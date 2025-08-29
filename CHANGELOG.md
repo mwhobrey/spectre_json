@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **maxExpansionLevel**: Maximum levels to expand when using levels mode
 - **Debug Mode**: Enable detailed logging for troubleshooting expansion issues
 
+### 🐛 Fixed
+- **Data Change Expansion**: Fixed issue where expansion logic wasn't re-applied when `initialData` changed after widget creation
+- **Widget Lifecycle**: Added `didUpdateWidget` lifecycle method to `JsonTreeView` to handle data changes properly
+
 ## [1.0.0] - 2024-01-15
 
 ### 🎉 Initial Release

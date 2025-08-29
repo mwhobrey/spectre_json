@@ -247,6 +247,23 @@ When debug mode is enabled, you'll see detailed console output showing:
 
 This can help identify if the expansion parameters are being received correctly and if the expansion logic is working as expected.
 
+#### Common Issues and Solutions
+
+**Issue**: Expansion not working when data is loaded asynchronously
+**Solution**: The package now automatically handles data changes. If you're still experiencing issues, ensure you're using a `ValueKey` with your data to force widget recreation:
+
+```dart
+JsonEditor(
+  key: ValueKey(yourData.hashCode), // Force recreation when data changes
+  initialData: yourData,
+  onDataChanged: (data) {},
+  expansionMode: ExpansionMode.all,
+)
+```
+
+**Issue**: Expansion mode not applying to updated data
+**Solution**: The package automatically re-applies expansion logic when `initialData` changes. If you're manually updating the data, make sure to pass the new data to the `initialData` parameter rather than trying to update it internally.
+
 ## 🎨 Available Themes
 
 ### Built-in Themes
