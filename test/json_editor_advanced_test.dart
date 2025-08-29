@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spectre_json/spectre_json.dart';
 
@@ -203,7 +202,6 @@ void main() {
 
     testWidgets('handles paste functionality', (WidgetTester tester) async {
       final testData = {'name': 'Test'};
-      Map<String, dynamic>? lastData;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -211,7 +209,7 @@ void main() {
             body: JsonEditor(
               initialData: testData,
               onDataChanged: (data) {
-                lastData = data;
+                // Data changed callback
               },
             ),
           ),
