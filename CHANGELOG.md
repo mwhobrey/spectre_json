@@ -5,6 +5,21 @@ All notable changes to the Spectre JSON package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2024-12-19
+
+### 🐛 Fixed
+- **Debug Mode Control**: Fixed issue where debug info was appearing even when `debugMode` was set to `false`
+- **Error Message Display**: Improved error message layout to prevent covering input area in raw view
+- **Cursor Position Preservation**: Fixed cursor jumping to end during debounced validation and formatting
+- **Auto-Save Behavior**: Resolved issue where user changes were being overwritten during internal operations
+- **Button Order**: Updated action button order to Clear, Format, Validate for better UX
+
+### 🔧 Improved
+- **Error Message Layout**: Compact error messages in raw view that don't interfere with editing
+- **Debug Entry Management**: Debug entries are only added when debug mode is enabled
+- **Validation Logic**: Simplified validation to preserve user input without overwriting work-in-progress
+- **Smart Change Management**: Internal operations (formatting, validation) no longer trigger unwanted parent callbacks
+
 ## [1.1.4] - 2024-12-19
 
 ### ✨ Added

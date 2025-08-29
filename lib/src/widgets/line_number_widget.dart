@@ -10,6 +10,7 @@ class LineNumberWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lines = text.split('\n');
+    // Calculate line height to match the text editor exactly
     final lineHeight = 13.0 * 1.4; // Match text editor line height
 
     return Column(
@@ -17,10 +18,10 @@ class LineNumberWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       children: List.generate(
         lines.length,
-        (index) => SizedBox(
+        (index) => Container(
           height: lineHeight,
           child: Align(
-            alignment: Alignment.centerRight,
+            alignment: Alignment.center,
             child: Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: Text(

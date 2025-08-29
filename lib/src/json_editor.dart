@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'theme/red_panda_theme.dart';
-import 'widgets/syntax_highlighted_text.dart';
 import 'widgets/json_tree_view.dart';
 
 /// Enum defining the available view types for the JSON editor.
@@ -55,6 +54,7 @@ enum ExpansionMode {
 /// * **Copy Functionality**: Built-in copy to clipboard support
 /// * **Customizable Themes**: Theme system with RedPandaTheme included
 /// * **Responsive Design**: Works seamlessly across different screen sizes
+/// * **Smart Auto-Save**: User changes are automatically saved when JSON is valid, without overwriting work-in-progress
 /// 
 /// ## Example
 /// 
@@ -203,17 +203,24 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
   Timer? _debounceTimer;
   String _lastHighlightedText = '';
 
+  // Flag to control when parent callbacks should be triggered
+  bool _isInternalOperation = false;
+
   // Debug variables
   List<String> _debugEntries = [];
 
   void _addDebugEntry(String entry) {
-    _debugEntries.add(entry);
-    setState(() {});
+    if (widget.debugMode) {
+      _debugEntries.add(entry);
+      setState(() {});
+    }
   }
 
   void _clearDebugEntries() {
-    _debugEntries.clear();
-    setState(() {});
+    if (widget.debugMode) {
+      _debugEntries.clear();
+      setState(() {});
+    }
   }
 
   @override
@@ -231,6 +238,9 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     // Initialize text controller with formatted JSON
     _textController = TextEditingController(text: _formatJson(_currentData));
     _lastHighlightedText = _textController.text;
+    
+    // Add initial debug entry
+    _addDebugEntry('JsonEditor initialized with ${_currentData.length} keys');
 
     // Handle expansion state
     if (widget.isExpanded != null) {
@@ -238,8 +248,17 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     }
 
     // Set up scroll synchronization
-    _lineNumbersScrollController.addListener(_syncScroll);
-    _textScrollController.addListener(_syncScroll);
+    _textScrollController.addListener(() {
+      if (_lineNumbersScrollController.hasClients) {
+        final textScrollPosition = _textScrollController.offset;
+        final lineNumbersScrollPosition = _lineNumbersScrollController.offset;
+        
+        // Only update if there's a significant difference to avoid infinite loops
+        if ((textScrollPosition - lineNumbersScrollPosition).abs() > 1.0) {
+          _lineNumbersScrollController.jumpTo(textScrollPosition);
+        }
+      }
+    });
   }
 
   @override
@@ -259,11 +278,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     
     // Update data when initialData changes
     if (oldWidget.initialData != widget.initialData) {
-      _currentData = Map<String, dynamic>.from(widget.initialData);
-      _textController.text = _formatJson(_currentData);
-      _lastHighlightedText = _textController.text;
-      _isValidJson = true;
-      _errorMessage = '';
+      _updateDataInternal(Map<String, dynamic>.from(widget.initialData));
     }
     
     // Update theme when it changes
@@ -283,9 +298,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     }
   }
 
-  void _syncScroll() {
-    // Scroll synchronization will be handled by the CustomScrollView
-  }
+
 
   void _insertSmartIndentation() {
     final text = _textController.text;
@@ -446,6 +459,8 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     // Preserve cursor position before validation
     final currentSelection = _textController.selection;
     
+    _addDebugEntry('Validating JSON: ${jsonText.length} characters');
+    
     try {
       final decoded = jsonDecode(jsonText) as Map<String, dynamic>;
       setState(() {
@@ -453,12 +468,20 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
         _isValidJson = true;
         _errorMessage = '';
       });
-      widget.onDataChanged(_currentData);
+      
+      _addDebugEntry('JSON validation successful: ${decoded.length} keys');
+      
+      // Only notify parent if this is not an internal operation
+      if (!_isInternalOperation) {
+        widget.onDataChanged(_currentData);
+      }
     } catch (e) {
       setState(() {
         _isValidJson = false;
         _errorMessage = 'Invalid JSON: $e';
       });
+      
+      _addDebugEntry('JSON validation failed: $e');
     }
     
     // Restore cursor position after validation
@@ -497,8 +520,30 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
       _isValidJson = true;
       _errorMessage = '';
     });
-    widget.onDataChanged(_currentData);
+    
+    // Only notify parent if this is not an internal operation
+    if (!_isInternalOperation) {
+      widget.onDataChanged(_currentData);
+    }
   }
+
+  /// Updates data during internal operations without triggering parent callbacks
+  void _updateDataInternal(Map<String, dynamic> newData) {
+    _isInternalOperation = true;
+    try {
+      setState(() {
+        _currentData = newData;
+        _textController.text = _formatJson(_currentData);
+        _lastHighlightedText = _textController.text;
+        _isValidJson = true;
+        _errorMessage = '';
+      });
+    } finally {
+      _isInternalOperation = false;
+    }
+  }
+
+
 
   void _copyToClipboard() {
     Clipboard.setData(ClipboardData(text: _formatJson(_currentData)));
@@ -513,6 +558,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
   void _pasteFromClipboard() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     if (data?.text != null) {
+      // Paste is a user action - should trigger parent callback
       _textController.text = data!.text!;
       _validateAndUpdateJson(data.text!);
     }
@@ -538,11 +584,11 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
               child: _buildContent(),
             ),
 
-            // Error Message
-            if (!_isValidJson) _buildErrorMessage(),
+            // Error Message (only show in main area for tree-only view)
+            if (!_isValidJson && widget.viewType == ViewType.treeOnly) _buildErrorMessage(),
 
-            // Debug Info
-            if (_debugEntries.isNotEmpty) _buildDebugInfo(),
+            // Debug Info (only show when debug mode is enabled)
+            if (widget.debugMode && _debugEntries.isNotEmpty) _buildDebugInfo(),
           ],
         ],
       ),
@@ -737,10 +783,10 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
                   : _buildEditableView(),
             ),
           ),
-          // Error message display
+          // Error message display (compact version for raw view)
           if (!_isValidJson && _errorMessage.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildErrorMessage(),
+            const SizedBox(height: 4),
+            _buildCompactErrorMessage(),
           ],
 
           // Action Buttons
@@ -754,114 +800,139 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
   }
 
   Widget _buildReadOnlyView() {
-    return SingleChildScrollView(
+    return Container(
       padding: const EdgeInsets.all(12),
-      child: SyntaxHighlightedText(text: _textController.text, theme: _theme),
+      child: _buildUnifiedLineNumberedView(),
     );
   }
 
-  Widget _buildEditableView() {
+    Widget _buildEditableView() {
     return Container(
       padding: const EdgeInsets.all(12),
-      child: CustomScrollView(
-        controller: _lineNumbersScrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Line numbers
-                Container(
-                  width: 50,
-                  decoration: BoxDecoration(
-                    color: _theme.lineNumbersBackground,
-                    border: Border(
-                      right: BorderSide(color: _theme.borderColor, width: 1),
-                    ),
-                  ),
-                  child: _buildLineNumbersOverlay(),
-                ),
-                // Text editor
-                Expanded(
-                  child: Focus(
-                    focusNode: _textFieldFocusNode,
-                    onKeyEvent: (node, event) {
-                      if (event is KeyDownEvent) {
-                        if (event.logicalKey == LogicalKeyboardKey.enter) {
-                          // Handle enter key with custom indentation
-                          _insertNewLineWithIndentation();
-                          // Prevent the default behavior
-                          return KeyEventResult.handled;
-                        } else if (event.logicalKey == LogicalKeyboardKey.tab) {
-                          // Handle tab key with context-aware indentation
-                          if (HardwareKeyboard.instance.isShiftPressed) {
-                            // Shift+Tab: Decrease indentation
-                            _decreaseIndentation();
-                          } else {
-                            // Tab: Increase indentation
-                            _insertSmartIndentation();
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Line numbers
+          Container(
+            width: 50,
+            decoration: BoxDecoration(
+              color: _theme.lineNumbersBackground,
+              border: Border(
+                right: BorderSide(color: _theme.borderColor, width: 1),
+              ),
+            ),
+            child: SingleChildScrollView(
+              controller: _lineNumbersScrollController,
+              physics: const NeverScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: _buildLineNumbersOverlay(),
+              ),
+            ),
+          ),
+          // Text editor
+          Expanded(
+            child: Focus(
+              focusNode: _textFieldFocusNode,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent) {
+                  if (event.logicalKey == LogicalKeyboardKey.enter) {
+                    // Handle enter key with custom indentation
+                    _insertNewLineWithIndentation();
+                    // Prevent the default behavior
+                    return KeyEventResult.handled;
+                  } else if (event.logicalKey == LogicalKeyboardKey.tab) {
+                    // Handle tab key with context-aware indentation
+                    if (HardwareKeyboard.instance.isShiftPressed) {
+                      // Shift+Tab: Decrease indentation
+                      _decreaseIndentation();
+                    } else {
+                      // Tab: Increase indentation
+                      _insertSmartIndentation();
+                    }
+                    // Prevent default tab behavior
+                    return KeyEventResult.handled;
+                  } else if (event.logicalKey ==
+                      LogicalKeyboardKey.bracketLeft) {
+                    // Auto-close brackets
+                    _insertAutoClosingBracket('[');
+                    return KeyEventResult.handled;
+                  } else if (event.logicalKey ==
+                      LogicalKeyboardKey.braceLeft) {
+                    // Auto-close braces
+                    _insertAutoClosingBrace('{');
+                    return KeyEventResult.handled;
+                  } else if (event.logicalKey ==
+                      LogicalKeyboardKey.quote) {
+                    // Auto-close quotes
+                    _insertAutoClosingQuote('"');
+                    return KeyEventResult.handled;
+                  } else if (event.logicalKey ==
+                      LogicalKeyboardKey.bracketRight) {
+                    // Handle closing bracket with proper indentation
+                    _handleClosingBracket(']');
+                    return KeyEventResult.handled;
+                  } else if (event.logicalKey ==
+                      LogicalKeyboardKey.braceRight) {
+                    // Handle closing brace with proper indentation
+                    _handleClosingBrace('}');
+                    return KeyEventResult.handled;
+                  }
+                }
+                return KeyEventResult.ignored;
+              },
+                                                           child: NotificationListener<ScrollNotification>(
+                  onNotification: (ScrollNotification notification) {
+                    // Synchronize scroll position for all scroll events
+                    if (notification is ScrollUpdateNotification ||
+                        notification is ScrollStartNotification ||
+                        notification is ScrollEndNotification) {
+                      // Use a more reliable scroll synchronization
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_lineNumbersScrollController.hasClients && 
+                            _textScrollController.hasClients) {
+                          final textScrollPosition = _textScrollController.offset;
+                          final lineNumbersScrollPosition = _lineNumbersScrollController.offset;
+                          
+                          // Only update if there's a significant difference to avoid infinite loops
+                          if ((textScrollPosition - lineNumbersScrollPosition).abs() > 1.0) {
+                            _lineNumbersScrollController.jumpTo(textScrollPosition);
                           }
-                          // Prevent default tab behavior
-                          return KeyEventResult.handled;
-                        } else if (event.logicalKey ==
-                            LogicalKeyboardKey.bracketLeft) {
-                          // Auto-close brackets
-                          _insertAutoClosingBracket('[');
-                          return KeyEventResult.handled;
-                        } else if (event.logicalKey ==
-                            LogicalKeyboardKey.braceLeft) {
-                          // Auto-close braces
-                          _insertAutoClosingBrace('{');
-                          return KeyEventResult.handled;
-                        } else if (event.logicalKey ==
-                            LogicalKeyboardKey.quote) {
-                          // Auto-close quotes
-                          _insertAutoClosingQuote('"');
-                          return KeyEventResult.handled;
-                        } else if (event.logicalKey ==
-                            LogicalKeyboardKey.bracketRight) {
-                          // Handle closing bracket with proper indentation
-                          _handleClosingBracket(']');
-                          return KeyEventResult.handled;
-                        } else if (event.logicalKey ==
-                            LogicalKeyboardKey.braceRight) {
-                          // Handle closing brace with proper indentation
-                          _handleClosingBrace('}');
-                          return KeyEventResult.handled;
                         }
-                      }
-                      return KeyEventResult.ignored;
-                    },
-                    child: TextField(
-                      controller: _textController,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 13,
-                        color: _theme.foreground,
-                        height: 1.4,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      maxLines: null,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.only(left: 12, right: 12),
-                        fillColor: Colors.transparent,
-                        filled: true,
-                      ),
-                      cursorColor: _theme.cursorColor,
-                      onChanged: _onTextChanged,
-                      // Enable better keyboard shortcuts
-                      enableInteractiveSelection: true,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      // Add custom keyboard shortcuts
-                      onTapOutside: (event) {
-                        _textFieldFocusNode.unfocus();
-                      },
-                    ),
+                      });
+                    }
+                    return false;
+                  },
+                child: TextField(
+                  controller: _textController,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    color: _theme.foreground,
+                    height: 1.4,
+                    fontWeight: FontWeight.w400,
+                    textBaseline: TextBaseline.alphabetic,
                   ),
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(8),
+                    fillColor: Colors.transparent,
+                    filled: true,
+                  ),
+                  cursorColor: _theme.cursorColor,
+                  onChanged: _onTextChanged,
+                  scrollController: _textScrollController,
+                  // Enable better keyboard shortcuts
+                  enableInteractiveSelection: true,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  // Add custom keyboard shortcuts
+                  onTapOutside: (event) {
+                    _textFieldFocusNode.unfocus();
+                  },
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -869,9 +940,110 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildUnifiedLineNumberedView() {
+    final lines = _textController.text.split('\n');
+    final lineHeight = 13.0 * 1.4; // Match text editor line height exactly
+
+    return SingleChildScrollView(
+      controller: _textScrollController,
+      child: Column(
+        children: List.generate(
+          lines.length,
+          (index) => Container(
+            height: lineHeight,
+            child: Baseline(
+              baseline: lineHeight * 0.8, // Adjust baseline to match text content
+              baselineType: TextBaseline.alphabetic,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Line number
+                  Container(
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: _theme.lineNumbersBackground,
+                      border: Border(
+                        right: BorderSide(color: _theme.borderColor, width: 1),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          color: _theme.foreground.withValues(alpha: 0.6),
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Line content
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.only(left: 8, top: 0),
+                      child: _buildHighlightedLine(lines[index]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightedLine(String line) {
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 13,
+          color: _theme.foreground,
+          height: 1.4,
+        ),
+        children: _buildHighlightedSpansForLine(line),
+      ),
+    );
+  }
+
+  List<TextSpan> _buildHighlightedSpansForLine(String line) {
+    final spans = <TextSpan>[];
+    final words = line.split(' ');
+    
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      Color color = _theme.foreground;
+      
+      // Simple syntax highlighting
+      if (word.startsWith('"') && word.endsWith('"')) {
+        color = _theme.stringColor;
+      } else if (word == 'true' || word == 'false') {
+        color = _theme.booleanColor;
+      } else if (word == 'null') {
+        color = _theme.nullColor;
+      } else if (RegExp(r'^\d+$').hasMatch(word)) {
+        color = _theme.numberColor;
+      } else if (word == '{' || word == '}' || word == '[' || word == ']') {
+        color = _theme.punctuationColor;
+      } else if (word == ':' || word == ',') {
+        color = _theme.punctuationColor;
+      }
+      
+      spans.add(TextSpan(
+        text: word + (i < words.length - 1 ? ' ' : ''),
+        style: TextStyle(color: color),
+      ));
+    }
+    
+    return spans;
+  }
+
   Widget _buildLineNumbersOverlay() {
     final lines = _textController.text.split('\n');
-    final lineHeight = 13.0 * 1.4; // Match text editor line height
+    // Use exact line height calculation to match text editor
+    final lineHeight = 13.0 * 1.4; // Match text editor line height exactly
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -880,17 +1052,17 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
         lines.length,
         (index) => SizedBox(
           height: lineHeight,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8.0),
+          child: Baseline(
+            baseline: lineHeight * 0.4, // Adjusted baseline to position numbers correctly
+            baselineType: TextBaseline.alphabetic,
+            child: Center(
               child: Text(
                 '${index + 1}',
                 style: TextStyle(
                   color: _theme.foreground.withValues(alpha: 0.6),
-                  fontSize: 12,
+                  fontSize: 13, // Match the text editor font size
                   fontFamily: 'monospace',
-                  height: 1.4,
+                  height: 1.4, // Match the text editor height
                 ),
               ),
             ),
@@ -906,22 +1078,7 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () {
-              _textController.text = _formatJson(_currentData);
-              _validateAndUpdateJson(_textController.text);
-            },
-            icon: const Icon(Icons.refresh, size: 14),
-            label: const Text('Format', style: TextStyle(fontSize: 12)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _theme.primaryColor,
-              foregroundColor: _theme.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
+              // Clear is a user action - should trigger parent callback
               setState(() {
                 _currentData = {};
                 _textController.text = '{}';
@@ -943,6 +1100,25 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () {
+              // Format button - format the current text and update data
+              final formattedText = _formatJson(_currentData);
+              _textController.text = formattedText;
+              _validateAndUpdateJson(formattedText);
+            },
+            icon: const Icon(Icons.refresh, size: 14),
+            label: const Text('Format', style: TextStyle(fontSize: 12)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _theme.primaryColor,
+              foregroundColor: _theme.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              // Validate button - validate current text without formatting
               _validateAndUpdateJson(_textController.text);
               if (_isValidJson) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -979,6 +1155,39 @@ class _JsonEditorState extends State<JsonEditor> with TickerProviderStateMixin {
             child: Text(
               _errorMessage,
               style: TextStyle(color: _theme.errorColor, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactErrorMessage() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: _theme.errorColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: _theme.errorColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: _theme.errorColor, size: 14),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              _errorMessage,
+              style: TextStyle(
+                color: _theme.errorColor, 
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

@@ -18,6 +18,7 @@ A beautiful and feature-rich JSON editor widget for Flutter with syntax highligh
 - ⚡ **Performance Optimized**: Efficient rendering and memory management
 - 🔧 **Smart Indentation**: Context-aware indentation and auto-closing
 - 🎛️ **Advanced Controls**: Format, clear, and validate JSON with action buttons
+- 💾 **Smart Auto-Save**: User changes are automatically saved when JSON is valid, without overwriting work-in-progress
 
 ## 🚀 Installation
 
@@ -25,7 +26,7 @@ Add `spectre_json` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spectre_json: ^1.1.4
+  spectre_json: ^1.1.5
 ```
 
 Then run:

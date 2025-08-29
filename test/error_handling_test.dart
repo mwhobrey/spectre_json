@@ -78,17 +78,17 @@ void main() {
       // Test missing closing brace
       await tester.enterText(textField, '{"name": "test"');
       await tester.pump(const Duration(milliseconds: 800));
-      expect(find.textContaining('Invalid JSON'), findsNWidgets(2));
+      expect(find.textContaining('Invalid JSON'), findsNWidgets(1));
 
       // Test invalid syntax
       await tester.enterText(textField, '{"name": test}');
       await tester.pump(const Duration(milliseconds: 800));
-      expect(find.textContaining('Invalid JSON'), findsNWidgets(2));
+      expect(find.textContaining('Invalid JSON'), findsNWidgets(1));
 
       // Test trailing comma
       await tester.enterText(textField, '{"name": "test",}');
       await tester.pump(const Duration(milliseconds: 800));
-      expect(find.textContaining('Invalid JSON'), findsNWidgets(2));
+      expect(find.textContaining('Invalid JSON'), findsNWidgets(1));
     });
 
     testWidgets('handles very large JSON data', (WidgetTester tester) async {

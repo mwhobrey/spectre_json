@@ -205,6 +205,60 @@ class _ExamplesPageState extends State<ExamplesPage> {
       'readOnly': false,
     },
     {
+      'title': 'Complex Nested Data (Read-Only)',
+      'description': 'Same complex data but in read-only mode for comparison',
+      'data': {
+        'metadata': {
+          'created': '2024-01-01T00:00:00Z',
+          'updated': '2024-01-15T12:30:00Z',
+          'version': '1.2.3',
+        },
+        'data': {
+          'users': [
+            {
+              'id': 1,
+              'name': 'Alice',
+              'role': 'admin',
+              'settings': {
+                'theme': 'dark',
+                'language': 'en',
+                'notifications': true,
+              },
+            },
+            {
+              'id': 2,
+              'name': 'Bob',
+              'role': 'user',
+              'settings': {
+                'theme': 'light',
+                'language': 'es',
+                'notifications': false,
+              },
+            },
+          ],
+          'products': [
+            {
+              'id': 'prod-001',
+              'name': 'Widget A',
+              'price': 29.99,
+              'inStock': true,
+              'tags': ['electronics', 'gadgets'],
+            },
+            {
+              'id': 'prod-002',
+              'name': 'Widget B',
+              'price': 49.99,
+              'inStock': false,
+              'tags': ['electronics', 'premium'],
+            },
+          ],
+        },
+      },
+      'allowCopy': true,
+      'readOnly': true,
+      'viewType': ViewType.rawOnly,
+    },
+    {
       'title': 'Tree View Only',
       'description': 'Shows only the tree view interface (no tabs)',
       'data': {

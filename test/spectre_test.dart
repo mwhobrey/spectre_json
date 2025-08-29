@@ -93,8 +93,8 @@ void main() {
       // Wait for debounced validation to complete
       await tester.pump(const Duration(milliseconds: 800));
 
-      // Should show error state (now shows in both the border and error message)
-      expect(find.textContaining('Invalid JSON'), findsNWidgets(2));
+      // Should show error state (now shows in the error message)
+      expect(find.textContaining('Invalid JSON'), findsNWidgets(1));
     });
 
     testWidgets('respects readOnly property', (WidgetTester tester) async {

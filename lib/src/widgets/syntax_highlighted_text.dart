@@ -20,6 +20,7 @@ class SyntaxHighlightedText extends StatelessWidget {
           fontSize: 13,
           color: theme.foreground,
           height: 1.4,
+          textBaseline: TextBaseline.alphabetic,
         ),
         children: _buildHighlightedSpans(),
       ),
