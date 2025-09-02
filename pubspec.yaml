@@ -1,6 +1,6 @@
 name: spectre_json
 description: A beautiful and feature-rich JSON editor widget for Flutter with syntax highlighting, tree view navigation, and customizable themes.
-version: 1.1.5
+version: 1.1.6
 homepage: https://mikewhob.com/spectre
 repository: https://github.com/mwhobrey/spectre_json
 issue_tracker: https://github.com/mwhobrey/spectre_json/issues

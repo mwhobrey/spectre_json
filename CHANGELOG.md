@@ -5,6 +5,17 @@ All notable changes to the Spectre JSON package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2024-12-19
+
+### 🔧 Fixed
+- **pub.dev Compliance**: Fixed package description length to meet 60-180 character requirement
+- **Repository URLs**: Updated all repository, issue tracker, and documentation URLs to match renamed `spectre_json` repository
+- **Git Remote**: Updated git remote origin to point to the correct repository
+
+### 📦 Infrastructure
+- **Repository Rename**: Successfully migrated from `spectre` to `spectre_json` repository
+- **pub.dev Scoring**: Resolved issues preventing proper package verification and scoring
+
 ## [1.1.5] - 2024-12-19
 
 ### 🐛 Fixed
